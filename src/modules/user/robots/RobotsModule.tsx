@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { maskPath } from '../../../routes/routeMap';
 import { useAuth } from '../../../api/hooks/useAuth';
 import ModuleTitle from '../../../components/ModuleTitle';
 import ModuleCard from '../../../components/ui/ModuleCard';
@@ -34,7 +35,7 @@ export default function RobotsModule() {
               <div>
                 <AdminButton
                   variant="primary"
-                  onClick={() => navigate('/dashboard/pago')}
+                  onClick={() => navigate(maskPath('/dashboard/pago'))}
                   icon={<Icons.CreditCard size={18} />}
                 >
                   Validar mi pago ahora
@@ -63,7 +64,7 @@ export default function RobotsModule() {
       }}>
         <ModuleCard
           title="Sobre la Competencia"
-          description="Prepárate para el evento más emocionante del congreso."
+          description="Prepárate para el evento más emocionante del sistema."
         >
           <div style={{ color: 'var(--text-secondary)', lineHeight: '1.6' }}>
             <p style={{ marginBottom: '1rem' }}>
@@ -72,7 +73,7 @@ export default function RobotsModule() {
             <ul style={{ paddingLeft: '1.2rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
               <li><strong>Categorías:</strong> 1lb (Antweight) y 3lb (Beetleweight)</li>
               <li><strong>Ubicación:</strong> Hotel Alcazar Doña Victoria</li>
-              <li><strong>Fecha:</strong> Durante el desarrollo del congreso (consultar agenda)</li>
+              <li><strong>Fecha:</strong> Durante el desarrollo del sistema (consultar agenda)</li>
             </ul>
           </div>
         </ModuleCard>
@@ -120,7 +121,7 @@ export default function RobotsModule() {
                 <h4 style={{ color: 'var(--text-primary)', margin: 0 }}>Conformación del Equipo</h4>
               </div>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Equipos de 2 a 4 integrantes. Todos deben estar inscritos en el congreso.
+                Equipos de 2 a 4 integrantes. Todos deben estar inscritos en el sistema.
               </p>
             </div>
             <div style={{ padding: '1.5rem', background: 'var(--bg-app)', borderRadius: '16px', border: '1px solid var(--border-soft)' }}>

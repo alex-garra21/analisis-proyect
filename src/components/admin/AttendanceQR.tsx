@@ -66,7 +66,7 @@ const AttendanceQR = forwardRef<AttendanceQRHandle, AttendanceQRProps>(({ worksh
         <div className="qr-header">
           <img src={logoUMG} alt="UMG Logo" className="qr-main-logo" />
           <div className="qr-header-text">
-            <h4>CONGRESO 2026</h4>
+            <h4>FLORES DEL CAMPO</h4>
             <span>SISTEMAS UMG</span>
           </div>
         </div>

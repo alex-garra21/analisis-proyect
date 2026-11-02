@@ -256,7 +256,7 @@ export default function TokensModule() {
 
       <ModuleCard
         title="Tokens de Activación"
-        description="Gestiona las llaves de acceso para los participantes del congreso."
+        description="Gestiona las llaves de acceso para los usuarios del sistema."
         headerActions={
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
             {currentAdmin?.rol === 'colaborador' && (

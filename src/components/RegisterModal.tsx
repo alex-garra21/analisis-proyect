@@ -201,7 +201,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
         </div>
       ) : (
         <>
-          <p className="modal-sub" style={{ marginBottom: '0.5rem' }}>Crea una cuenta para participar en el congreso</p>
+          <p className="modal-sub" style={{ marginBottom: '0.5rem' }}>Crea una cuenta para operar en el sistema</p>
           <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '1.5rem' }}>
             Los campos marcados con <span style={{ color: '#ef4444' }}>*</span> son obligatorios.
           </p>

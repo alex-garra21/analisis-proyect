@@ -1,7 +1,7 @@
-import { useAuth } from '../api/hooks/useAuth';
-import { Icons } from '../components/Icons';
-import congresoHero from '../assets/congreso-hero.png';
-import { supabase } from '../utils/supabase';
+import { useAuth } from '../../api/hooks/useAuth';
+import { Icons } from '../../components/Icons';
+import congresoHero from '../../assets/background-hero.png';
+import { supabase } from '../../utils/supabase';
 
 export default function DeactivatedPage() {
   const { user } = useAuth();
@@ -103,7 +103,7 @@ export default function DeactivatedPage() {
             <div>
               <h4 style={{ margin: '0 0 8px', fontSize: '16px', color: 'var(--text-primary)' }}>Cuenta Desactivada</h4>
               <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
-                Tu perfil ha sido desactivado por el administrador del sistema. Para más detalles sobre tu registro, acude a la organización del congreso.
+                Tu perfil ha sido desactivado por el administrador del sistema. Para más detalles sobre tu registro, acude a la administración del sistema.
               </p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function DeactivatedPage() {
           <div style={{ position: 'absolute', top: '-11px', right: '-36px', width: '20px', height: '20px', background: 'var(--bg-primary)', borderRadius: '50%' }}></div>
 
           <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Sistemas UMG - Congreso 2026
+            Comercial Flores del Campo
           </p>
         </div>
       </div>

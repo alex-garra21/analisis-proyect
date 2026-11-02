@@ -312,7 +312,7 @@ export default function DiplomaModule() {
             El diploma se generará y enviará posteriormente por cada conferencia en la que cumplas <strong>los tres requisitos</strong>:
           </p>
           <ul style={{ listStyleType: 'disc', paddingLeft: '1.2rem', marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <li>Estar inscrito al Congreso 2026 con pago validado</li>
+            <li>Estar inscrito al Comercial Flores del Campo con pago validado</li>
             <li>Haber seleccionado la conferencia específica en tu agenda</li>
             <li>Haber confirmado tu asistencia escaneando el QR durante la conferencia</li>
           </ul>

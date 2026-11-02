@@ -14,7 +14,7 @@ export default function ModuleTitle({ title }: ModuleTitleProps) {
 
   useEffect(() => {
     setTitle(title);
-    // document.title = `${title} | Congreso 2026`; // Opcional: actualizar pestaña
+    // document.title = `${title} | Comercial Flores del Campo`; // Opcional: actualizar pestaña
   }, [title, setTitle]);
 
   return null;

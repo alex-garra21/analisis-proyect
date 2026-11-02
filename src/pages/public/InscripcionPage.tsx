@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import LoginModal from '../components/LoginModal';
-import RegisterModal from '../components/RegisterModal';
-import { Icons } from '../components/Icons';
-import PublicContainer from '../components/layout/PublicContainer';
+import LoginModal from '../../components/LoginModal';
+import RegisterModal from '../../components/RegisterModal';
+import { Icons } from '../../components/Icons';
+import PublicContainer from '../../components/layout/PublicContainer';
 
 const steps = [
   {
@@ -57,7 +57,7 @@ export default function InscripcionPage() {
     <PublicContainer
       badge="Proceso"
       title="Cómo Inscribirte"
-      description="Sigue estos sencillos pasos para asegurar tu lugar en el Congreso UMG 2026."
+      description="Sigue estos sencillos pasos para asegurar tu lugar en el Comercial Flores del Campo."
     >
       <div className="robotics-rules-grid" style={{ marginBottom: '4rem' }}>
         {steps.map((step) => (

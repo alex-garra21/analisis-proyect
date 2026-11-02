@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
+import { maskPath, plainPath } from '../routes/routeMap';
 import { supabase } from '../utils/supabase';
 import React, { useState } from 'react';
 import { useAuth } from '../api/hooks/useAuth';
@@ -19,7 +20,6 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isPaid = user?.pagoValidado;
   const isStaffMember = isStaff(user?.rol);
   const isOnlyAdmin = user?.rol === 'admin';
 
@@ -36,40 +36,11 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
     { id: 'perfil', label: 'Mi perfil', Icon: Icons.User, section: 'GENERAL' },
   ];
 
-  // Items de Inscripción (Para todos los usuarios excepto si el admin decide ocultarlo, 
-  // pero aquí lo habilitamos para que el admin pruebe el flujo)
+  // Módulos de Comercial Flores del Campo (personal)
   menuItems.push(
-    { id: 'pago', label: 'Pago', Icon: Icons.CreditCard, section: 'INSCRIPCIÓN', badge: isPaid ? 'OK' : 'PEND' },
-    { id: 'talleres', label: 'Mis conferencias', Icon: Icons.Calendar, section: 'INSCRIPCIÓN' },
-    { id: 'diploma', label: 'Diploma', Icon: Icons.Award, section: 'INSCRIPCIÓN' }
+    { id: 'inventario', label: 'Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' },
+    { id: 'bandeja-cotizaciones', label: 'Bandeja de cotizaciones', Icon: Icons.CreditCard, section: 'COMERCIAL' }
   );
-
-  if (isPaid || isOnlyAdmin) {
-    menuItems.push({ id: 'robots', label: 'Guerra de Robots', Icon: Icons.Zap, section: 'INSCRIPCIÓN' });
-  }
-
-  // Items de Administración (Para staff)
-  if (isStaffMember) {
-    // Ambos (Admin y Colaborador) ven Tokens
-    menuItems.push({ id: 'admin-tokens', label: 'Tokens de Pago', Icon: Icons.Shield, section: 'ADMINISTRACIÓN' });
-
-    // Solo el Super Admin ve el resto de herramientas por el momento
-    if (isOnlyAdmin) {
-      menuItems.push(
-        { id: 'admin-usuarios', label: 'Usuarios', Icon: Icons.User, section: 'ADMINISTRACIÓN' },
-        { id: 'admin-asistencia', label: 'Control Asistencia', Icon: Icons.CheckCircle, section: 'ADMINISTRACIÓN' },
-        { id: 'admin-reportes', label: 'Reportes', Icon: Icons.BarChart, section: 'ADMINISTRACIÓN' },
-        { id: 'admin-agenda', label: 'Gestión Agenda', Icon: Icons.Clipboard, section: 'ADMINISTRACIÓN' }
-      );
-    }
-  }
-
-  // Items de Personalización (Solo Admins)
-  if (isOnlyAdmin) {
-    menuItems.push(
-      { id: 'admin-config-agenda', label: 'Contenedor Agenda', Icon: Icons.Calendar, section: 'PERSONALIZACIÓN' }
-    );
-  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -87,7 +58,7 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
         <div className="sidebar-logo">
           {isExpanded ? (
             <div className="logo-full">
-              <span className="logo-main">CONGRESO 2026</span>
+              <span className="logo-main">FLORES DEL CAMPO</span>
               <img src={logoSistemas} alt="Sistemas UMG" className="logo-img-sub" />
             </div>
           ) : (
@@ -109,7 +80,7 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
 
       <div
         className="sidebar-user"
-        onClick={() => navigate('/dashboard/perfil')}
+        onClick={() => navigate(maskPath('/dashboard/perfil'))}
       >
         <div className={`user-avatar ${user?.rol || 'participante'}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {user?.avatarUrl ? (
@@ -131,7 +102,7 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
       </div>
 
       <nav className="sidebar-nav">
-        {['GENERAL', 'INSCRIPCIÓN', 'ADMINISTRACIÓN', 'PERSONALIZACIÓN']
+        {['GENERAL', 'COMERCIAL', 'INSCRIPCIÓN', 'ADMINISTRACIÓN', 'PERSONALIZACIÓN']
           .filter(section => {
             if (section === 'ADMINISTRACIÓN' && !isStaffMember) return false;
             if (section === 'PERSONALIZACIÓN' && !isOnlyAdmin) return false;
@@ -144,9 +115,9 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
                 {menuItems.filter(item => item.section === section).map(item => (
                   <li key={item.id} className="nav-item">
                     <button
-                      className={`nav-link ${location.pathname.includes(item.id) ? 'active' : (item.id === 'inicio' && location.pathname === '/dashboard' ? 'active' : '')}`}
+                      className={`nav-link ${plainPath(location.pathname).includes(item.id) ? 'active' : (item.id === 'inicio' && plainPath(location.pathname) === '/dashboard' ? 'active' : '')}`}
                       onClick={() => {
-                        navigate(`/dashboard/${item.id}`);
+                        navigate(maskPath(`/dashboard/${item.id}`));
                         onModuleChange?.(item.id);
                       }}
                     >

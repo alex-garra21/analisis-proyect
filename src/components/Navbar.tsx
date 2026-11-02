@@ -4,7 +4,7 @@ import { useAuth } from '../api/hooks/useAuth';
 import LoginModal from './LoginModal';
 import RegisterModal from './RegisterModal';
 import { Icons } from './Icons';
-import logoPng from '../assets/LogoCongresoA.png';
+import { maskPath, plainPath } from '../routes/routeMap';
 
 export default function Navbar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -27,9 +27,9 @@ export default function Navbar() {
     if (isAuthenticated && user) {
       // Si ya está logueado, redirigir al dashboard
       if (user.rol === 'admin') {
-        navigate('/dashboard/admin-tokens');
+        navigate(maskPath('/dashboard/admin-tokens'));
       } else {
-        navigate('/dashboard/inicio');
+        navigate(maskPath('/dashboard/inicio'));
       }
     } else {
       // Si no, abrir modales
@@ -47,14 +47,12 @@ export default function Navbar() {
   const openLogin = () => handleAuthAction('login');
   const openRegister = () => handleAuthAction('register');
 
+  const current = plainPath(location.pathname);
+  const isActive = (path: string) => current === path || (path !== '/' && current.startsWith(path + '/'));
+
   const navLinks = [
     { name: 'Inicio', path: '/', Icon: Icons.Home },
-    { name: 'Agenda', path: '/agenda', Icon: Icons.Calendar },
-    { name: 'Ponentes', path: '/ponentes', Icon: Icons.Users },
-    { name: 'Comunidad', path: '/participantes-info', Icon: Icons.Users },
-    { name: 'Asistencia', path: '/asistencia-info', Icon: Icons.Smartphone },
-    { name: 'Inscripción', path: '/inscripcion', Icon: Icons.Info },
-    { name: 'Pago', path: '/pago', Icon: Icons.CreditCard },
+    { name: 'Catálogo', path: '/catalogo', Icon: Icons.Info },
   ];
 
   return (
@@ -64,19 +62,12 @@ export default function Navbar() {
           <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <Icons.X size={24} /> : <Icons.Menu size={24} />}
           </button>
-          <Link to="/" className="nav-logo" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-          <img 
-            src={logoPng} 
-            alt="Logo Congreso" 
-            className="nav-logo-img"
-          />
-        </Link>
         </div>
 
         <ul className="nav-links">
           {navLinks.map(link => (
             <li key={link.path}>
-              <Link to={link.path} className={location.pathname === link.path ? 'active' : ''}>
+              <Link to={maskPath(link.path)} className={isActive(link.path) ? 'active' : ''}>
                 {link.name}
               </Link>
             </li>
@@ -88,7 +79,7 @@ export default function Navbar() {
             {isAuthenticated ? 'Ir al Dashboard' : 'Iniciar sesión'}
           </button>
           <button className="btn-solid" onClick={openRegister}>
-            {isAuthenticated ? 'Mi Cuenta' : 'Regístrate aquí'}
+            {isAuthenticated ? 'Mi Cuenta' : 'Cotiza por Telegram'}
           </button>
         </div>
       </nav>
@@ -107,8 +98,8 @@ export default function Navbar() {
             {navLinks.map(link => (
               <li key={link.path}>
                 <Link
-                  to={link.path}
-                  className={location.pathname === link.path ? 'active' : ''}
+                  to={maskPath(link.path)}
+                  className={isActive(link.path) ? 'active' : ''}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <link.Icon size={20} className="nav-icon-svg" />

@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { maskPath } from '../../../routes/routeMap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../api/hooks/useAuth';
 import { updateUserDataMutation } from '../../../api/supabase/users/userMutations';
@@ -292,7 +293,7 @@ useEffect(() => {
             <div style={{ flex: 1 }}>
               <strong style={{ display: 'block', fontSize: '17px', marginBottom: '4px', color: 'var(--text-primary)' }}>Modo Vista Previa</strong>
               <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
-                Explora la agenda completa. Valida tu pago en el módulo de <span style={{ textDecoration: 'underline', fontWeight: 700, cursor: 'pointer', color: 'var(--accent-primary)' }} onClick={() => navigate('/dashboard/pago')}>Pagos</span> para habilitar tu inscripción.
+                Explora la agenda completa. Valida tu pago en el módulo de <span style={{ textDecoration: 'underline', fontWeight: 700, cursor: 'pointer', color: 'var(--accent-primary)' }} onClick={() => navigate(maskPath('/dashboard/pago'))}>Pagos</span> para habilitar tu inscripción.
               </p>
             </div>
           </div>
@@ -499,7 +500,7 @@ useEffect(() => {
 
           {isConfirmed && (
             <BackButton 
-              to="/dashboard/diploma" 
+              to={maskPath('/dashboard/diploma')} 
               label="Validar Datos para Diploma"
               icon={<Icons.Award size={18} color="#ffffff" />}
             />

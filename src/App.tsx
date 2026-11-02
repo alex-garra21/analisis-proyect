@@ -6,27 +6,27 @@ import { supabase } from './utils/supabase';
 import Layout from './components/Layout';
 
 // Carga perezosa de Páginas
-const Home = lazy(() => import('./pages/Home'));
-const AgendaPage = lazy(() => import('./pages/AgendaPage'));
-const PonentesPage = lazy(() => import('./pages/Ponentes'));
-const InscripcionPage = lazy(() => import('./pages/InscripcionPage'));
-const PagoPage = lazy(() => import('./pages/PagoPage'));
-const AttendancePage = lazy(() => import('./pages/AttendancePage'));
-const AsistenciaInfo = lazy(() => import('./pages/AsistenciaInfo'));
-const ParticipantesInfo = lazy(() => import('./pages/ParticipantesInfo'));
+const Home = lazy(() => import('./pages/public/Home'));
+const CatalogoPage = lazy(() => import('./pages/public/CatalogoPage'));
+const ProductoDetallePage = lazy(() => import('./pages/public/ProductoDetallePage'));
+//const CotizacionesPage = lazy(() => import('./pages/public/CotizacionesPage'));
+//const CotizacionDetallePage = lazy(() => import('./pages/public/CotizacionDetallePage'));
 
 // Importar Dashboard components
 import DashboardLayout from './components/DashboardLayout';
-const DashboardHome = lazy(() => import('./modules/user/dashboard/DashboardHome'));
+const DashboardHome = lazy(() => import('./pages/private/DashboardHome'));
 const PaymentModule = lazy(() => import('./modules/user/pago/PaymentModule'));
 const ProfileModule = lazy(() => import('./modules/general/perfil/ProfileModule'));
 const WorkshopsModule = lazy(() => import('./modules/user/talleres/WorkshopsModule'));
 const DiplomaModule = lazy(() => import('./modules/user/diploma/DiplomaModule'));
 const RobotsModule = lazy(() => import('./modules/user/robots/RobotsModule'));
-const AdminModule = lazy(() => import('./pages/AdminModule'));
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
-const DeactivatedPage = lazy(() => import('./pages/DeactivatedPage'));
+const AdminModule = lazy(() => import('./pages/private/AdminModule'));
+const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
+const InventarioPage = lazy(() => import('./pages/private/InventarioPage'));
+const BandejaCotizacionesPage = lazy(() => import('./pages/private/BandejaCotizacionesPage'));
+const DeactivatedPage = lazy(() => import('./pages/public/DeactivatedPage'));
 import { DashboardTitleProvider } from './utils/DashboardTitleContext';
+import { ROUTES, seg, plainPath } from './routes/routeMap';
 import { useAuth, useGlobalAuthListener } from './api/hooks/useAuth';
 
 // Componente de carga premium
@@ -65,19 +65,19 @@ function AuthHandler() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         localStorage.setItem('is_recovering_pw', 'true');
-        navigate('/reset-password');
+        navigate(ROUTES.resetPassword);
       }
 
       if (localStorage.getItem('is_recovering_pw') === 'true' && 
-          window.location.pathname.startsWith('/dashboard')) {
-        navigate('/reset-password');
+          plainPath(window.location.pathname).startsWith('/dashboard')) {
+        navigate(ROUTES.resetPassword);
       }
     });
 
     if (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token=') || window.location.search.includes('type=recovery')) {
       localStorage.setItem('is_recovering_pw', 'true');
-      if (window.location.pathname !== '/reset-password') {
-        setTimeout(() => navigate('/reset-password'), 100);
+      if (window.location.pathname !== ROUTES.resetPassword) {
+        setTimeout(() => navigate(ROUTES.resetPassword), 100);
       }
     }
 
@@ -87,10 +87,10 @@ function AuthHandler() {
   // Bloqueo de seguridad para usuarios desactivados
   useEffect(() => {
     if (user?.desactivado) {
-      if (window.location.pathname !== '/cuenta-desactivada') {
-        navigate('/cuenta-desactivada');
+      if (window.location.pathname !== ROUTES.cuentaDesactivada) {
+        navigate(ROUTES.cuentaDesactivada);
       }
-    } else if (window.location.pathname === '/cuenta-desactivada') {
+    } else if (window.location.pathname === ROUTES.cuentaDesactivada) {
       // Si ya no está desactivado pero sigue en la página de error, mandarlo al inicio
       navigate('/');
     }
@@ -99,52 +99,58 @@ function AuthHandler() {
   return null;
 }
 
+function NotFoundOrRedirect() {
+  return (
+    <div style={{ padding: '4rem 2rem', color: 'var(--text-primary)' }}>
+      <h2>Página no encontrada</h2>
+      <p>El enlace no es válido.</p>
+    </div>
+  );
+}
 function App() {
   return (
     <BrowserRouter>
       <AuthHandler />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Rutas Públicas */}
+          {/* Rutas Públicas (todas con segmentos enmascarados) */}
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="agenda" element={<AgendaPage />} />
-            <Route path="ponentes" element={<PonentesPage />} />
-            <Route path="inscripcion" element={<InscripcionPage />} />
-            <Route path="pago" element={<PagoPage />} />
-            <Route path="asistencia-info" element={<AsistenciaInfo />} />
-            <Route path="participantes-info" element={<ParticipantesInfo />} />
-            <Route path="asistencia/:workshopId" element={<AttendancePage />} />
-            <Route path="*" element={<div style={{ padding: '4rem 2rem', color: 'var(--text-primary)' }}><h2>Página no encontrada</h2></div>} />
+            <Route path={seg('catalogo')} element={<CatalogoPage />} />
+            <Route path={`${seg('catalogo')}/:maskedId`} element={<ProductoDetallePage />} />
+            <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 
-          {/* Ruta Protegida de Restablecimiento de Contraseña (Fuera del layout normal) */}
-          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path={seg('reset-password')} element={<ResetPasswordPage />} />
+          <Route path={seg('cuenta-desactivada')} element={<DeactivatedPage />} />
 
-          {/* Ruta de Cuenta Desactivada */}
-          <Route path="/cuenta-desactivada" element={<DeactivatedPage />} />
-
-          {/* Rutas Privadas (Dashboard) envolviendo con el proveedor de títulos */}
-          <Route path="/dashboard" element={
+          {/* Rutas Privadas (Dashboard) */}
+          <Route path={seg('dashboard')} element={
             <DashboardTitleProvider>
               <DashboardLayout />
             </DashboardTitleProvider>
           }>
             <Route index element={<DashboardHome />} />
-            <Route path="inicio" element={<DashboardHome />} />
-            <Route path="pago" element={<PaymentModule />} />
-            <Route path="perfil" element={<ProfileModule />} />
-            <Route path="talleres" element={<WorkshopsModule />} />
-            <Route path="diploma" element={<DiplomaModule />} />
-            <Route path="robots" element={<RobotsModule />} />
-            <Route path="admin" element={<AdminModule defaultTab="tokens" />} />
-            <Route path="admin-tokens" element={<AdminModule defaultTab="tokens" />} />
-            <Route path="admin-usuarios" element={<AdminModule defaultTab="users" />} />
-            <Route path="admin-asistencia" element={<AdminModule defaultTab="attendance" />} />
-            <Route path="admin-reportes" element={<AdminModule defaultTab="reports" />} />
-            <Route path="admin-agenda" element={<AdminModule defaultTab="agenda" />} />
-            <Route path="admin-config-agenda" element={<AdminModule defaultTab="agenda-config" />} />
+            <Route path={seg('inicio')} element={<DashboardHome />} />
+            <Route path={seg('pago')} element={<PaymentModule />} />
+            <Route path={seg('perfil')} element={<ProfileModule />} />
+            <Route path={seg('talleres')} element={<WorkshopsModule />} />
+            <Route path={seg('diploma')} element={<DiplomaModule />} />
+            <Route path={seg('robots')} element={<RobotsModule />} />
+            <Route path={seg('inventario')} element={<InventarioPage />} />
+            <Route path={seg('bandeja-cotizaciones')} element={<BandejaCotizacionesPage />} />
+            <Route path={seg('admin')} element={<AdminModule defaultTab="tokens" />} />
+            <Route path={seg('admin-tokens')} element={<AdminModule defaultTab="tokens" />} />
+            <Route path={seg('admin-usuarios')} element={<AdminModule defaultTab="users" />} />
+            <Route path={seg('admin-asistencia')} element={<AdminModule defaultTab="attendance" />} />
+            <Route path={seg('admin-reportes')} element={<AdminModule defaultTab="reports" />} />
+            <Route path={seg('admin-agenda')} element={<AdminModule defaultTab="agenda" />} />
+            <Route path={seg('admin-config-agenda')} element={<AdminModule defaultTab="agenda-config" />} />
+            <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
+
+          {/* Cualquier otra ruta (incluidas URLs planas) -> no encontrada */}
+          <Route path="*" element={<NotFoundOrRedirect />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

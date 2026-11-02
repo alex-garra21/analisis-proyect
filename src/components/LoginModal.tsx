@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { maskPath } from '../routes/routeMap';
 import { useNavigate } from 'react-router-dom';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import PasswordField from './PasswordField';
@@ -47,10 +48,10 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
       clearFields();
       onClose();
       if (result.user?.rol === 'admin') {
-        navigate('/dashboard/admin');
+        navigate(maskPath('/dashboard/admin'));
       } else {
         // Colaboradores y Participantes van al inicio
-        navigate('/dashboard/inicio');
+        navigate(maskPath('/dashboard/inicio'));
       }
     } else {
       showToast(result.message, 'error');

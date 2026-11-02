@@ -57,7 +57,7 @@ export function useGlobalAuthListener() {
 
       if (_event === 'SIGNED_OUT') {
         queryClient.setQueryData(['userProfile'], null);
-        localStorage.removeItem('congreso_current_user');
+        localStorage.removeItem('fdc_current_user');
         try {
           clearAppLocalStorageCache();
         } catch (e) {

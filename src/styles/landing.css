@@ -107,7 +107,7 @@
 .hero-grid {
   position: absolute;
   inset: 0;
-  background-image: url('../assets/congreso-hero.png');
+  background-image: url('../assets/background-hero.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

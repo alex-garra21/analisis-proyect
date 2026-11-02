@@ -1,5 +1,5 @@
-import { Icons } from '../components/Icons';
-import PublicContainer from '../components/layout/PublicContainer';
+import { Icons } from '../../components/Icons';
+import PublicContainer from '../../components/layout/PublicContainer';
 
 export default function AsistenciaInfo() {
   const features = [

@@ -1,5 +1,5 @@
-import { Icons } from '../components/Icons';
-import PublicContainer from '../components/layout/PublicContainer';
+import { Icons } from '../../components/Icons';
+import PublicContainer from '../../components/layout/PublicContainer';
 
 export default function ParticipantesInfo() {
 
@@ -27,7 +27,7 @@ export default function ParticipantesInfo() {
             GUERRA DE <span>ROBOTS</span> 2026
           </h2>
           <p className="robotics-description">
-            ¡Prepárate para la batalla de ingenio más emocionante! Bajo el lema <strong>"¡Pincha el Globo!"</strong>, el Congreso UMG 2026 desafía tu capacidad de diseño y programación. Aquí no solo importa la fuerza; la precisión y la estrategia en tiempo real decidirán quién sobrevive.
+            ¡Prepárate para la batalla de ingenio más emocionante! Bajo el lema <strong>"¡Pincha el Globo!"</strong>, el Comercial Flores del Campo desafía tu capacidad de diseño y programación. Aquí no solo importa la fuerza; la precisión y la estrategia en tiempo real decidirán quién sobrevive.
           </p>
 
           <div className="robotics-rules-grid">

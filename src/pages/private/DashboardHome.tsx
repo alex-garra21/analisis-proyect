@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
+import { maskPath } from '../../routes/routeMap';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../api/hooks/useAuth';
-import { getAllUsersQuery } from '../../../api/supabase/users/userQueries';
-import { syncUserEnrollmentsMutation } from '../../../api/supabase/enrollment/enrollmentMutations';
-import { type UserData, isStaff } from '../../../utils/auth';
-import ModuleTitle from '../../../components/ModuleTitle';
-import LocationLink from '../../../components/LocationLink';
-import StatusCard from '../../../components/ui/StatusCard';
-import EnrollmentStep from '../../../components/ui/EnrollmentStep';
-import { Icons } from '../../../components/Icons';
+import { useAuth } from '../../api/hooks/useAuth';
+import { getAllUsersQuery } from '../../api/supabase/users/userQueries';
+import { syncUserEnrollmentsMutation } from '../../api/supabase/enrollment/enrollmentMutations';
+import { type UserData, isStaff } from '../../utils/auth';
+import ModuleTitle from '../../components/ModuleTitle';
+import LocationLink from '../../components/LocationLink';
+import StatusCard from '../../components/ui/StatusCard';
+import EnrollmentStep from '../../components/ui/EnrollmentStep';
+import { Icons } from '../../components/Icons';
 
 export default function DashboardHome() {
   const { user, refetchProfile } = useAuth();
@@ -95,7 +96,7 @@ export default function DashboardHome() {
           position: 'relative',
           overflow: 'hidden',
           cursor: 'pointer'
-        }} onClick={() => navigate('/dashboard/talleres')}>
+        }} onClick={() => navigate(maskPath('/dashboard/talleres'))}>
           <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '6px', background: '#ef4444' }} />
           <div style={{ 
             background: 'rgba(239, 68, 68, 0.1)', 
@@ -124,26 +125,26 @@ export default function DashboardHome() {
           label="ESTADO DE PAGO" accentColor={isActualPaid ? 'var(--status-success)' : isSent ? 'var(--status-pending)' : 'var(--status-error)'}
           badge={isActualPaid ? <span className="step-badge-reusable success">{isStaff(user?.rol) ? 'Staff / Validado' : 'Pago Validado'}</span> : isSent ? <span className="step-badge-reusable warning">En revisión</span> : <span className="step-badge-reusable danger">Pendiente</span>}
           sub={isStaff(user?.rol) ? 'Acceso administrativo total' : isSent ? 'Validando comprobante' : 'Pago requerido para participar'}
-          footerLink="Ver detalles de pago →" onClick={() => navigate('/dashboard/pago')}
+          footerLink="Ver detalles de pago →" onClick={() => navigate(maskPath('/dashboard/pago'))}
         />
 
         <StatusCard
           label="CONFERENCIAS" value={workshopsCount} accentColor={user?.alertaChoqueHorario ? 'var(--status-error)' : workshopsReady ? 'var(--status-success)' : 'var(--status-error)'}
           sub={user?.alertaChoqueHorario ? 'Conflicto de horario detectado' : workshopsCount === 1 ? 'Conferencia seleccionada' : 'Conferencias en tu agenda'}
-          footerLink="Gestionar conferencias →" onClick={() => navigate('/dashboard/talleres')}
+          footerLink="Gestionar conferencias →" onClick={() => navigate(maskPath('/dashboard/talleres'))}
         />
 
         <StatusCard
           label="DIPLOMA" accentColor={diplomaReady ? 'var(--status-success)' : 'var(--status-error)'}
           badge={diplomaReady ? <span className="step-badge-reusable success" style={{ background: 'rgba(121, 80, 242, 0.15)', color: '#7950f2' }}>{isStaff(user?.rol) ? 'Habilitado' : 'Confirmado'}</span> : <span className="step-badge-reusable neutral">Pendiente</span>}
           sub={diplomaReady ? 'Datos listos para impresión' : 'Confirma tus datos aquí'}
-          footerLink="Revisar datos →" onClick={() => navigate('/dashboard/diploma')}
+          footerLink="Revisar datos →" onClick={() => navigate(maskPath('/dashboard/diploma'))}
         />
 
         <StatusCard
           label="FECHA EVENTO" value="23 de Mayo" accentColor="var(--status-success)" sub="Hotel Alcazar doña Victoria"
           icon={<Icons.Calendar color="var(--accent-primary)" />}
-          footerLink="Añadir a Calendario →" onClick={() => window.open('https://www.google.com/calendar/render?action=TEMPLATE&text=CONGRESO+2026+UMG+SISTEMAS+COBÁN&dates=20260523T140000Z/20260523T230000Z&details=El+evento+académico+más+importante+del+año.&location=Hotel+Alcazar+doña+Victoria,+Cobán', '_blank')}
+          footerLink="Añadir a Calendario →" onClick={() => window.open('https://www.google.com/calendar/render?action=TEMPLATE&text=COMERCIAL+FLORES+DEL+CAMPO&dates=20260523T140000Z/20260523T230000Z&details=El+evento+académico+más+importante+del+año.&location=Hotel+Alcazar+doña+Victoria,+Cobán', '_blank')}
         />
       </div>
 
@@ -158,11 +159,11 @@ export default function DashboardHome() {
           </div>
 
           <div className="status-grid-container" style={{ marginTop: '1.5rem' }}>
-            <StatusCard label="TOTAL REGISTRADOS" value={loadingAdmin ? '...' : totalUsersCount} sub="Cuentas activas en total" accentColor="var(--accent-primary)" icon={<Icons.Users />} navigateTo="/dashboard/admin-usuarios" />
-            <StatusCard label="PAGOS VALIDADOS" value={loadingAdmin ? '...' : paidUsersCount} sub="Inscripciones confirmadas" accentColor="var(--status-success)" icon={<Icons.CheckCircle />} navigateTo="/dashboard/admin-usuarios" />
-            <StatusCard label="ESTUDIANTES UMG" value={loadingAdmin ? '...' : studentUsers} sub="Alumnos de la universidad" accentColor="var(--accent-secondary)" icon={<Icons.Layout />} navigateTo="/dashboard/admin-usuarios" />
-            <StatusCard label="DOCENTES UMG" value={loadingAdmin ? '...' : teacherUsers} sub="Catedráticos UMG" accentColor="#8b5cf6" icon={<Icons.Award />} navigateTo="/dashboard/admin-usuarios" />
-            <StatusCard label="PARTICIPANTES EXTERNOS" value={loadingAdmin ? '...' : externalUsers} sub="Público general" accentColor="var(--status-pending)" icon={<Icons.Users />} navigateTo="/dashboard/admin-usuarios" />
+            <StatusCard label="TOTAL REGISTRADOS" value={loadingAdmin ? '...' : totalUsersCount} sub="Cuentas activas en total" accentColor="var(--accent-primary)" icon={<Icons.Users />} navigateTo={maskPath('/dashboard/admin-usuarios')} />
+            <StatusCard label="PAGOS VALIDADOS" value={loadingAdmin ? '...' : paidUsersCount} sub="Inscripciones confirmadas" accentColor="var(--status-success)" icon={<Icons.CheckCircle />} navigateTo={maskPath('/dashboard/admin-usuarios')} />
+            <StatusCard label="ESTUDIANTES UMG" value={loadingAdmin ? '...' : studentUsers} sub="Alumnos de la universidad" accentColor="var(--accent-secondary)" icon={<Icons.Layout />} navigateTo={maskPath('/dashboard/admin-usuarios')} />
+            <StatusCard label="DOCENTES UMG" value={loadingAdmin ? '...' : teacherUsers} sub="Catedráticos UMG" accentColor="#8b5cf6" icon={<Icons.Award />} navigateTo={maskPath('/dashboard/admin-usuarios')} />
+            <StatusCard label="PARTICIPANTES EXTERNOS" value={loadingAdmin ? '...' : externalUsers} sub="Público general" accentColor="var(--status-pending)" icon={<Icons.Users />} navigateTo={maskPath('/dashboard/admin-usuarios')} />
           </div>
 
           {deactivatedUsers > 0 && (
@@ -174,7 +175,7 @@ export default function DashboardHome() {
                 description={`Existen ${deactivatedUsers} usuario(s) con cuenta desactivada que no aparecen en las métricas de participación.`}
                 badgeLabel="Atención"
                 badgeVariant="danger"
-                onClick={() => navigate('/dashboard/admin-usuarios')}
+                onClick={() => navigate(maskPath('/dashboard/admin-usuarios'))}
               />
             </div>
           )}
@@ -194,7 +195,7 @@ export default function DashboardHome() {
             title={hasDpi ? "Perfil completo" : "Datos de perfil pendientes"}
             description={hasDpi ? "Los datos del perfil han sido registrados y actualizados correctamente" : "Por favor, ingresa tu número de DPI para completar tu perfil"}
             badgeLabel={hasDpi ? "Completado" : "Pendiente"} badgeVariant={hasDpi ? "success" : "danger"}
-            onClick={() => navigate('/dashboard/perfil')}
+            onClick={() => navigate(maskPath('/dashboard/perfil'))}
           />
 
           <EnrollmentStep
@@ -204,7 +205,7 @@ export default function DashboardHome() {
             description={isActualPaid ? "Inscripción activada correctamente" : isSent ? "Comprobante recibido, en revisión" : "Pendiente de realizar pago"}
             badgeLabel={isActualPaid ? "Completado" : isSent ? "En proceso" : "Pendiente"}
             badgeVariant={isActualPaid ? "success" : isSent ? "danger" : "danger"}
-            onClick={() => navigate('/dashboard/pago')}
+            onClick={() => navigate(maskPath('/dashboard/pago'))}
           />
 
           <EnrollmentStep
@@ -214,7 +215,7 @@ export default function DashboardHome() {
             description={user?.alertaChoqueHorario ? "Se requiere corregir conflicto de horario" : workshopsCount > 0 ? `${workshopsCount} conferencias en tu agenda` : "Elige las conferencias de tu interés"}
             badgeLabel={user?.alertaChoqueHorario ? "Atención" : workshopsReady ? "Completado" : "Pendiente"}
             badgeVariant={user?.alertaChoqueHorario ? "danger" : workshopsReady ? "success" : "danger"}
-            onClick={() => navigate('/dashboard/talleres')}
+            onClick={() => navigate(maskPath('/dashboard/talleres'))}
           />
 
           <EnrollmentStep
@@ -224,7 +225,7 @@ export default function DashboardHome() {
             description={diplomaReady ? "Datos del diploma confirmados" : "Confirma tu nombre y correo para el diploma"}
             badgeLabel={diplomaReady ? "Completado" : "Pendiente"}
             badgeVariant={diplomaReady ? "success" : "danger"}
-            onClick={() => navigate('/dashboard/diploma')}
+            onClick={() => navigate(maskPath('/dashboard/diploma'))}
           />
 
           <EnrollmentStep
@@ -234,7 +235,7 @@ export default function DashboardHome() {
             description={isActualPaid ? "Inscripción y gestión de robots habilitada" : "Habilitado al validar tu pago"}
             badgeLabel={isActualPaid ? "Habilitado" : "Pendiente"}
             badgeVariant={isActualPaid ? "success" : "danger"}
-            onClick={() => navigate('/dashboard/robots')}
+            onClick={() => navigate(maskPath('/dashboard/robots'))}
           />
         </div>
       </section>

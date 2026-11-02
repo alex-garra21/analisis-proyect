@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { maskPath } from '../../../routes/routeMap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../api/hooks/useAuth';
 import ModuleTitle from '../../../components/ModuleTitle';
@@ -50,7 +51,7 @@ export default function AgendaModule() {
 
   useEffect(() => {
     if (!isAuthLoading && user && !isOnlyAdmin) {
-      navigate('/dashboard/inicio');
+      navigate(maskPath('/dashboard/inicio'));
     }
   }, [user, isOnlyAdmin, isAuthLoading, navigate]);
 

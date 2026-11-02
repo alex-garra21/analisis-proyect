@@ -11,7 +11,7 @@ interface CalendarLinkProps {
  * This centralizes the event details (date, title, location).
  */
 export default function CalendarLink({ children, className, style }: CalendarLinkProps) {
-  const calendarUrl = "https://www.google.com/calendar/render?action=TEMPLATE&text=CONGRESO+2026+UMG+SISTEMAS+COBÁN&dates=20260523T140000Z/20260524T000000Z&details=El+evento+académico+más+importante+del+año.&location=Hotel+Alcazar+doña+Victoria,+Cobán";
+  const calendarUrl = "https://www.google.com/calendar/render?action=TEMPLATE&text=COMERCIAL+FLORES+DEL+CAMPO&dates=20260523T140000Z/20260524T000000Z&details=El+evento+académico+más+importante+del+año.&location=Hotel+Alcazar+doña+Victoria,+Cobán";
 
   return (
     <a 

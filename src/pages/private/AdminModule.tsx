@@ -1,13 +1,14 @@
 import { lazy, Suspense } from 'react';
+import { maskPath } from '../../routes/routeMap';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../api/hooks/useAuth';
+import { useAuth } from '../../api/hooks/useAuth';
 
-const TokensModule = lazy(() => import('../modules/admin/tokens/TokensModule'));
-const UsersModule = lazy(() => import('../modules/admin/usuarios/UsersModule'));
-const AttendanceModule = lazy(() => import('../modules/admin/asistencia/AttendanceModule'));
-const ReportsModule = lazy(() => import('../modules/admin/reportes/ReportsModule'));
-const AgendaModule = lazy(() => import('../modules/admin/agenda/AgendaModule'));
-const AgendaConfigModule = lazy(() => import('../modules/admin/agenda/AgendaConfigModule'));
+const TokensModule = lazy(() => import('../../modules/admin/tokens/TokensModule'));
+const UsersModule = lazy(() => import('../../modules/admin/usuarios/UsersModule'));
+const AttendanceModule = lazy(() => import('../../modules/admin/asistencia/AttendanceModule'));
+const ReportsModule = lazy(() => import('../../modules/admin/reportes/ReportsModule'));
+const AgendaModule = lazy(() => import('../../modules/admin/agenda/AgendaModule'));
+const AgendaConfigModule = lazy(() => import('../../modules/admin/agenda/AgendaConfigModule'));
 
 interface AdminModuleProps {
   defaultTab: 'tokens' | 'users' | 'reports' | 'agenda' | 'attendance' | 'agenda-config';
@@ -20,13 +21,13 @@ export default function AdminModule({ defaultTab }: AdminModuleProps) {
 
   // Bloqueo total para participantes
   if (!isAdmin && !isColaborador) {
-    return <Navigate to="/dashboard/inicio" replace />;
+    return <Navigate to={maskPath('/dashboard/inicio')} replace />;
   }
 
   // Bloqueo de pestañas específicas para colaboradores (solo pueden ver tokens)
   const restrictedTabs = ['users', 'reports', 'attendance', 'agenda', 'agenda-config'];
   if (isColaborador && restrictedTabs.includes(defaultTab)) {
-    return <Navigate to="/dashboard/admin-tokens" replace />;
+    return <Navigate to={maskPath('/dashboard/admin-tokens')} replace />;
   }
 
   return (

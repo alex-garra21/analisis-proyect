@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { changePassword, validatePasswordStrength } from '../utils/auth';
-import PasswordField from '../components/PasswordField';
-import { Icons } from '../components/Icons';
-import { showToast } from '../utils/swal';
-import PasswordRequirements from '../components/PasswordRequirements';
-import { supabase } from '../utils/supabase';
-import congresoHero from '../assets/congreso-hero.png';
+import { changePassword, validatePasswordStrength } from '../../utils/auth';
+import PasswordField from '../../components/PasswordField';
+import { Icons } from '../../components/Icons';
+import { showToast } from '../../utils/swal';
+import PasswordRequirements from '../../components/PasswordRequirements';
+import { supabase } from '../../utils/supabase';
+import congresoHero from '../../assets/background-hero.png';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -171,7 +171,7 @@ export default function ResetPasswordPage() {
             <Icons.Check size={32} />
           </div>
           <h1 style={{ fontFamily: 'Source Sans 3', fontSize: '24px', color: 'var(--accent-primary)', margin: 0 }}>
-            XIV Congreso de Ingeniería
+            Comercial Flores del Campo
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
             Sistemas UMG - Cobán 2026

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { maskPath } from '../../../routes/routeMap';
 import { useAllUsers, useUpdateUserData, useInvalidatePayment, useAdminValidateUser, useResetDiplomaStatus, useResetUserWorkshops } from '../../../api/hooks/useUsers';
 import { useAuth } from '../../../api/hooks/useAuth';
 import { type UserData } from '../../../utils/auth';
@@ -106,7 +107,7 @@ export default function UsersModule() {
       await updateUserDataMutation.mutateAsync({ ...user, rol: newRole });
       showToast('Rol actualizado correctamente', 'success');
       if (newRole !== 'admin' && user.id === currentAdmin?.id) {
-        setTimeout(() => window.location.href = '/dashboard/inicio', 1500);
+        setTimeout(() => window.location.href = maskPath('/dashboard/inicio'), 1500);
       }
     }
   };

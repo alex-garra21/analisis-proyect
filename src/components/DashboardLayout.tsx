@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { maskPath, plainPath } from '../routes/routeMap';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAuth } from '../api/hooks/useAuth';
@@ -21,7 +22,7 @@ export default function DashboardLayout() {
 
     // 2. Protección de rutas por ROL
     if (!isLoading && user) {
-      const path = location.pathname;
+      const path = plainPath(location.pathname);
       const isAdminOnlyPath =
         path.includes('admin-usuarios') ||
         path.includes('admin-asistencia') ||
@@ -33,12 +34,12 @@ export default function DashboardLayout() {
 
       // Si es ruta de Admin y no es admin -> Fuera
       if (isAdminOnlyPath && user.rol !== 'admin') {
-        navigate('/dashboard/inicio');
+        navigate(maskPath('/dashboard/inicio'));
       }
 
       // Si es ruta de Tokens y no es staff (admin o colab) -> Fuera
       if (isStaffPath && user.rol !== 'admin' && user.rol !== 'colaborador') {
-        navigate('/dashboard/inicio');
+        navigate(maskPath('/dashboard/inicio'));
       }
     }
   }, [session, user, isLoading, navigate, location.pathname]);

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { type AgendaItem, type Speaker, generateSlug } from '../utils/agendaStore';
-import { useCharlas } from '../api/hooks/useAgenda';
-import { useAuth } from '../api/hooks/useAuth';
-import { loginUser, type UserData } from '../utils/auth';
-import { useMarkAttendance } from '../api/hooks/useEnrollment';
-import { Icons } from '../components/Icons';
+import { type AgendaItem, type Speaker, generateSlug } from '../../utils/agendaStore';
+import { useCharlas } from '../../api/hooks/useAgenda';
+import { useAuth } from '../../api/hooks/useAuth';
+import { loginUser, type UserData } from '../../utils/auth';
+import { useMarkAttendance } from '../../api/hooks/useEnrollment';
+import { Icons } from '../../components/Icons';
 
 // Utility to parse time strings like "9:00 AM" to Date objects
 function parseTimeStr(timeStr: string, baseDate?: string): Date {
@@ -326,7 +326,7 @@ export default function AttendancePage() {
 
                   <button
                     onClick={() => {
-                      import('../utils/supabase').then(m => m.supabase.auth.signOut());
+                      import('../../utils/supabase').then(m => m.supabase.auth.signOut());
                     }}
                     style={{
                       background: 'none',

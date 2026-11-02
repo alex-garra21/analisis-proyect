@@ -6,14 +6,13 @@ export default function Layout() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <Navbar />
 
-      {/* <Outlet /> es el espacio dinámico donde React Router inyectará la página actual */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <Outlet />
       </main>
 
       <footer className="footer-bar">
-        <span className="footer-logo">CONGRESO SISTEMAS UMG 2026</span>
-        <span className="footer-copy">© 2026 Universidad Mariano Gálvez de Guatemala</span>
+        <span className="footer-logo">COMERCIAL FLORES DEL CAMPO</span>
+        <span className="footer-copy">© 2026 Proyecto Analisis de Sistemas UMG - Steven Reyes</span>
       </footer>
     </div>
   );

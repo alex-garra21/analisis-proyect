@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { useCharlas } from '../api/hooks/useAgenda';
-import type { AgendaItem } from '../data/agendaData';
-import WorkshopBadge from '../components/workshops/WorkshopBadge';
-import AgendaModal from '../components/AgendaModal';
-import CalendarLink from '../components/CalendarLink';
-import LocationLink from '../components/LocationLink';
-import { Icons } from '../components/Icons';
-import PublicContainer from '../components/layout/PublicContainer';
+import { useCharlas } from '../../api/hooks/useAgenda';
+import type { AgendaItem } from '../../data/agendaData';
+import WorkshopBadge from '../../components/workshops/WorkshopBadge';
+import AgendaModal from '../../components/AgendaModal';
+import CalendarLink from '../../components/CalendarLink';
+import LocationLink from '../../components/LocationLink';
+import { Icons } from '../../components/Icons';
+import PublicContainer from '../../components/layout/PublicContainer';
 
-import { timeToMinutes } from '../utils/timeUtils';
+import { timeToMinutes } from '../../utils/timeUtils';
 
 export default function AgendaPage() {
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState<'Mañana' | 'Tarde'>('Mañana');
