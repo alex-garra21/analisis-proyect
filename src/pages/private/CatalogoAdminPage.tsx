@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react';
-import { ROUTES } from '../../routes/routeMap';
-import { useNavigate } from 'react-router-dom';
 import { useMercaderias, useCategorias } from '../../api/hooks/useComercial';
+import { useAuth } from '../../api/hooks/useAuth';
 import type { Mercaderia } from '../../types/database';
 import { formatQuetzales } from '../../types/database';
-import { createMaskedUrl } from '../../utils/routerHasher';
 import AdminTable from '../../components/ui/AdminTable';
 import SearchBar from '../../components/ui/SearchBar';
 import { Icons } from '../../components/Icons';
 import MercaderiaFormModal from '../../modules/admin/catalogo/MercaderiaFormModal';
-import Swal from 'sweetalert2';
+import MercaderiaDetalleModal from '../../modules/admin/catalogo/MercaderiaDetalleModal';
 
 /**
  * Vista Protegida del Catálogo (/dashboard/catalogo-admin):
@@ -18,13 +16,24 @@ import Swal from 'sweetalert2';
  * codigo_mercaderia, nombre, categoria, precio_unitario (Q.), stock_actual y acciones.
  */
 export default function CatalogoAdminPage() {
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('Todas');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Modal de Creación / Edición de Mercadería
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [mercaderiaToEdit, setMercaderiaToEdit] = useState<Mercaderia | null>(null);
+
+  // Modal de Ficha Técnica Privada
+  const [isDetalleModalOpen, setIsDetalleModalOpen] = useState(false);
+  const [selectedMercaderia, setSelectedMercaderia] = useState<Mercaderia | null>(null);
 
   const { data: mercaderias = [], isLoading } = useMercaderias();
   const { data: categorias = [] } = useCategorias();
+
+  // Validación de permisos administrativos
+  const rawRole = (user?.rol || 'colaborador').toLowerCase().trim();
+  const canManageMercaderias = rawRole === 'sistemas' || rawRole === 'administrador' || user?.correo === 'salexanderr2@gmail.com';
 
   const categoriasList = useMemo(() => {
     return ['Todas', ...categorias.map((c) => c.nombre)];
@@ -46,21 +55,19 @@ export default function CatalogoAdminPage() {
     });
   }, [query, selectedCategoria, mercaderias]);
 
-  const handleViewDetails = (m: Mercaderia) => {
-    navigate(createMaskedUrl(ROUTES.catalogo, m.id));
+  const handleOpenCreate = () => {
+    setMercaderiaToEdit(null);
+    setIsFormModalOpen(true);
   };
 
-  const handleAddToCart = (m: Mercaderia) => {
-    Swal.fire({
-      icon: 'success',
-      title: 'Mercadería seleccionada',
-      html: `<strong>${m.nombre}</strong> (${m.codigo_mercaderia}) añadida para cotización.`,
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2400,
-      timerProgressBar: true,
-    });
+  const handleOpenEdit = (m: Mercaderia) => {
+    setMercaderiaToEdit(m);
+    setIsFormModalOpen(true);
+  };
+
+  const handleViewDetails = (m: Mercaderia) => {
+    setSelectedMercaderia(m);
+    setIsDetalleModalOpen(true);
   };
 
   const headers = [
@@ -109,22 +116,24 @@ export default function CatalogoAdminPage() {
               fontWeight: 600,
             }}
           >
-            <button
-              type="button"
-              className="btn-solid"
-              onClick={() => setIsModalOpen(true)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-              }}
-            >
-              <Icons.Plus size={16} />
-              <span>Nueva Mercadería</span>
-            </button>
+            {canManageMercaderias && (
+              <button
+                type="button"
+                className="btn-solid"
+                onClick={handleOpenCreate}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
+                <Icons.Plus size={16} />
+                <span>Nueva Mercadería</span>
+              </button>
+            )}
 
             <span
               style={{
@@ -166,14 +175,16 @@ export default function CatalogoAdminPage() {
                 onClick={() => setSelectedCategoria(cat)}
                 style={{
                   padding: '6px 14px',
-                  borderRadius: 20,
+                  borderRadius: '20px',
                   fontSize: '12px',
-                  fontWeight: isSelected ? 700 : 500,
-                  border: isSelected ? '1px solid #C85A32' : '1px solid var(--border-med)',
-                  background: isSelected ? 'rgba(200, 90, 50, 0.12)' : 'var(--bg-card)',
+                  fontWeight: 600,
+                  border: isSelected
+                    ? '1px solid #C85A32'
+                    : '1px solid var(--border-soft)',
+                  backgroundColor: isSelected ? 'rgba(200, 90, 50, 0.12)' : 'var(--bg-card)',
                   color: isSelected ? '#C85A32' : 'var(--text-secondary)',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'all 0.15s ease',
                   whiteSpace: 'nowrap',
                 }}
               >
@@ -184,11 +195,11 @@ export default function CatalogoAdminPage() {
         </div>
       </div>
 
-      {/* Tabla Profesional de Mercaderías */}
+      {/* Tabla de Mercaderías */}
       <AdminTable
         headers={headers}
         isLoading={isLoading}
-        emptyMessage="No se encontraron mercaderías en la base de datos."
+        emptyMessage="No se encontraron mercaderías registradas con los filtros actuales."
       >
         {filtrados.map((m) => {
           const isOut = m.stock_actual <= 0;
@@ -255,22 +266,38 @@ export default function CatalogoAdminPage() {
                   style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <button
-                    type="button"
-                    className="btn-card-primary"
-                    style={{ padding: '6px 12px', fontSize: '12px' }}
-                    onClick={() => handleAddToCart(m)}
-                    disabled={isOut}
-                  >
-                    <Icons.ShoppingCart size={14} />
-                    <span>Añadir</span>
-                  </button>
+                  {/* Botón Editar Mercadería */}
+                  {canManageMercaderias ? (
+                    <button
+                      type="button"
+                      className="btn-card-primary"
+                      style={{ padding: '6px 14px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => handleOpenEdit(m)}
+                      title="Editar datos generales de la mercadería"
+                    >
+                      <Icons.Edit size={14} />
+                      <span>Editar</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn-card-primary"
+                      style={{ padding: '6px 14px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      onClick={() => handleViewDetails(m)}
+                      title="Ver Ficha Técnica"
+                    >
+                      <Icons.Info size={14} />
+                      <span>Ver Ficha</span>
+                    </button>
+                  )}
+
+                  {/* Botón Ver Ficha Técnica Privada */}
                   <button
                     type="button"
                     className="btn-card-secondary-square"
                     style={{ width: '32px', height: '32px' }}
                     onClick={() => handleViewDetails(m)}
-                    title="Ver detalle"
+                    title="Ver Ficha Técnica Privada"
                   >
                     <Icons.ArrowRight size={15} />
                   </button>
@@ -281,9 +308,25 @@ export default function CatalogoAdminPage() {
         })}
       </AdminTable>
 
+      {/* Modal de Creación / Edición */}
       <MercaderiaFormModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isFormModalOpen}
+        onClose={() => {
+          setIsFormModalOpen(false);
+          setMercaderiaToEdit(null);
+        }}
+        mercaderiaToEdit={mercaderiaToEdit}
+      />
+
+      {/* Modal de Ficha Técnica Privada */}
+      <MercaderiaDetalleModal
+        isOpen={isDetalleModalOpen}
+        onClose={() => {
+          setIsDetalleModalOpen(false);
+          setSelectedMercaderia(null);
+        }}
+        mercaderia={selectedMercaderia}
+        onEdit={canManageMercaderias ? (m) => handleOpenEdit(m) : undefined}
       />
     </div>
   );

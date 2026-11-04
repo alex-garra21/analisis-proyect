@@ -10,6 +10,7 @@ import {
 } from '../supabase/comercialQueries';
 import {
   createMercaderiaMutation,
+  updateMercaderiaGeneralMutation,
   updateMercaderiaStockMutation,
   createCategoriaMutation,
   updateCategoriaMutation,
@@ -21,6 +22,7 @@ import {
 } from '../supabase/comercialMutations';
 import type {
   CreateMercaderiaInput,
+  UpdateMercaderiaDatosGeneralesInput,
   CreateClienteInput,
   CreateCotizacionManualInput,
 } from '../supabase/comercialMutations';
@@ -91,6 +93,19 @@ export function useCreateMercaderia() {
     mutationFn: (input: CreateMercaderiaInput) => createMercaderiaMutation(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+      queryClient.invalidateQueries({ queryKey: ['categorias'] });
+    },
+  });
+}
+
+
+export function useUpdateMercaderiaGeneral() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpdateMercaderiaDatosGeneralesInput) => updateMercaderiaGeneralMutation(input),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+      queryClient.invalidateQueries({ queryKey: ['mercaderia', data.id] });
       queryClient.invalidateQueries({ queryKey: ['categorias'] });
     },
   });

@@ -134,6 +134,51 @@ export async function createMercaderiaMutation(
 /**
  * 2. Actualizar stock de mercadería (Ingreso o Devolución)
  */
+
+export interface UpdateMercaderiaDatosGeneralesInput {
+  id: number;
+  nombre: string;
+  categoria_id?: number | null;
+  nueva_categoria?: string;
+  codigo_mercaderia?: string;
+}
+
+/**
+ * 1.1 Actualizar datos generales de mercadería (Excluye precio y stock)
+ */
+export async function updateMercaderiaGeneralMutation(
+  input: UpdateMercaderiaDatosGeneralesInput
+): Promise<Mercaderia> {
+  let targetCategoriaId = input.categoria_id;
+
+  if (input.nueva_categoria && input.nueva_categoria.trim()) {
+    targetCategoriaId = await createCategoriaMutation(input.nueva_categoria.trim());
+  }
+
+  const updatePayload: Record<string, any> = {
+    nombre: input.nombre.trim(),
+    categoria_id: targetCategoriaId || null,
+  };
+
+  if (input.codigo_mercaderia && input.codigo_mercaderia.trim()) {
+    updatePayload.codigo_mercaderia = input.codigo_mercaderia.trim().toUpperCase();
+  }
+
+  const { data, error } = await supabase
+    .from('mercaderias')
+    .update(updatePayload)
+    .eq('id', input.id)
+    .select('*, categorias:categoria_id(id, nombre, descripcion)')
+    .single();
+
+  if (error) {
+    console.error('Error al actualizar datos de mercadería:', error);
+    throw new Error('Error al actualizar mercaderia');
+  }
+
+  return data;
+}
+
 export async function updateMercaderiaStockMutation(
   id: number,
   nuevoStock: number

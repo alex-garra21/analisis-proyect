@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { maskPath } from '../routes/routeMap';
 import { useNavigate } from 'react-router-dom';
-import ForgotPasswordModal from './ForgotPasswordModal';
 import PasswordField from './PasswordField';
 import Modal from './ui/Modal';
 import FormField from './ui/FormField';
@@ -17,7 +16,6 @@ interface LoginModalProps {
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
-  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -74,24 +72,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             />
           </FormField>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={() => setIsForgotOpen(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#C85A32',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              ¿Olvidaste tu contraseña?
-            </button>
-          </div>
-
           <div style={{ marginTop: '0.5rem' }}>
             <LoadingButton type="submit" isLoading={isLoading} className="btn-solid" style={{ width: '100%' }}>
               Ingresar al Sistema
@@ -99,12 +79,6 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
           </div>
         </form>
       </Modal>
-
-      {isForgotOpen && (
-        <ForgotPasswordModal
-          onClose={() => setIsForgotOpen(false)}
-        />
-      )}
     </>
   );
 }
