@@ -2,34 +2,31 @@ import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { supabase } from './utils/supabase';
 
-// Importar el Layout
+// Layout Principal
 import Layout from './components/Layout';
 
-// Carga perezosa de Páginas
+// Páginas Públicas
 const Home = lazy(() => import('./pages/public/Home'));
 const CatalogoPage = lazy(() => import('./pages/public/CatalogoPage'));
 const ProductoDetallePage = lazy(() => import('./pages/public/ProductoDetallePage'));
-//const CotizacionesPage = lazy(() => import('./pages/public/CotizacionesPage'));
-//const CotizacionDetallePage = lazy(() => import('./pages/public/CotizacionDetallePage'));
+const CotizacionesPage = lazy(() => import('./pages/public/CotizacionesPage'));
+const CotizacionDetallePage = lazy(() => import('./pages/public/CotizacionDetallePage'));
+const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
+const DeactivatedPage = lazy(() => import('./pages/public/DeactivatedPage'));
 
-// Importar Dashboard components
+// Páginas Privadas (Dashboard)
 import DashboardLayout from './components/DashboardLayout';
 const DashboardHome = lazy(() => import('./pages/private/DashboardHome'));
-const PaymentModule = lazy(() => import('./modules/user/pago/PaymentModule'));
 const ProfileModule = lazy(() => import('./modules/general/perfil/ProfileModule'));
-const WorkshopsModule = lazy(() => import('./modules/user/talleres/WorkshopsModule'));
-const DiplomaModule = lazy(() => import('./modules/user/diploma/DiplomaModule'));
-const RobotsModule = lazy(() => import('./modules/user/robots/RobotsModule'));
-const AdminModule = lazy(() => import('./pages/private/AdminModule'));
-const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
+const CatalogoAdminPage = lazy(() => import('./pages/private/CatalogoAdminPage'));
 const InventarioPage = lazy(() => import('./pages/private/InventarioPage'));
 const BandejaCotizacionesPage = lazy(() => import('./pages/private/BandejaCotizacionesPage'));
-const DeactivatedPage = lazy(() => import('./pages/public/DeactivatedPage'));
+const UsersModule = lazy(() => import('./modules/admin/usuarios/UsersModule'));
+
 import { DashboardTitleProvider } from './utils/DashboardTitleContext';
 import { ROUTES, seg, plainPath } from './routes/routeMap';
 import { useAuth, useGlobalAuthListener } from './api/hooks/useAuth';
 
-// Componente de carga premium
 const PageLoader = () => (
   <div style={{
     display: 'flex',
@@ -48,7 +45,7 @@ const PageLoader = () => (
       borderRadius: '50%',
       animation: 'spin 1s linear infinite',
       marginBottom: '1rem'
-    }}></div>
+    }} />
     <span style={{ fontSize: '0.9rem', letterSpacing: '0.05em' }}>Cargando módulo...</span>
     <style>{`
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -68,7 +65,7 @@ function AuthHandler() {
         navigate(ROUTES.resetPassword);
       }
 
-      if (localStorage.getItem('is_recovering_pw') === 'true' && 
+      if (localStorage.getItem('is_recovering_pw') === 'true' &&
           plainPath(window.location.pathname).startsWith('/dashboard')) {
         navigate(ROUTES.resetPassword);
       }
@@ -84,72 +81,67 @@ function AuthHandler() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Bloqueo de seguridad para usuarios desactivados
+  // Bloqueo de seguridad si el estado de usuario está inactivo (estado = false)
   useEffect(() => {
-    if (user?.desactivado) {
+    if (user && user.estado === false) {
       if (window.location.pathname !== ROUTES.cuentaDesactivada) {
         navigate(ROUTES.cuentaDesactivada);
       }
     } else if (window.location.pathname === ROUTES.cuentaDesactivada) {
-      // Si ya no está desactivado pero sigue en la página de error, mandarlo al inicio
       navigate('/');
     }
-  }, [user?.desactivado, navigate]);
+  }, [user?.estado, navigate]);
 
   return null;
 }
 
 function NotFoundOrRedirect() {
   return (
-    <div style={{ padding: '4rem 2rem', color: 'var(--text-primary)' }}>
+    <div style={{ padding: '4rem 2rem', color: 'var(--text-primary)', textAlign: 'center' }}>
       <h2>Página no encontrada</h2>
-      <p>El enlace no es válido.</p>
+      <p style={{ color: 'var(--text-secondary)' }}>El enlace solicitado no es válido.</p>
     </div>
   );
 }
+
 function App() {
   return (
     <BrowserRouter>
       <AuthHandler />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Rutas Públicas (todas con segmentos enmascarados) */}
+          {/* Rutas Públicas */}
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path={seg('catalogo')} element={<CatalogoPage />} />
             <Route path={`${seg('catalogo')}/:maskedId`} element={<ProductoDetallePage />} />
+            <Route path={seg('cotizaciones')} element={<CotizacionesPage />} />
+            <Route path={`${seg('cotizaciones')}/:maskedId`} element={<CotizacionDetallePage />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 
           <Route path={seg('reset-password')} element={<ResetPasswordPage />} />
           <Route path={seg('cuenta-desactivada')} element={<DeactivatedPage />} />
 
-          {/* Rutas Privadas (Dashboard) */}
-          <Route path={seg('dashboard')} element={
-            <DashboardTitleProvider>
-              <DashboardLayout />
-            </DashboardTitleProvider>
-          }>
+          {/* Rutas Privadas / Protegidas (Dashboard Comercial) */}
+          <Route
+            path={seg('dashboard')}
+            element={
+              <DashboardTitleProvider>
+                <DashboardLayout />
+              </DashboardTitleProvider>
+            }
+          >
             <Route index element={<DashboardHome />} />
             <Route path={seg('inicio')} element={<DashboardHome />} />
-            <Route path={seg('pago')} element={<PaymentModule />} />
             <Route path={seg('perfil')} element={<ProfileModule />} />
-            <Route path={seg('talleres')} element={<WorkshopsModule />} />
-            <Route path={seg('diploma')} element={<DiplomaModule />} />
-            <Route path={seg('robots')} element={<RobotsModule />} />
+            <Route path={seg('catalogo-admin')} element={<CatalogoAdminPage />} />
             <Route path={seg('inventario')} element={<InventarioPage />} />
             <Route path={seg('bandeja-cotizaciones')} element={<BandejaCotizacionesPage />} />
-            <Route path={seg('admin')} element={<AdminModule defaultTab="tokens" />} />
-            <Route path={seg('admin-tokens')} element={<AdminModule defaultTab="tokens" />} />
-            <Route path={seg('admin-usuarios')} element={<AdminModule defaultTab="users" />} />
-            <Route path={seg('admin-asistencia')} element={<AdminModule defaultTab="attendance" />} />
-            <Route path={seg('admin-reportes')} element={<AdminModule defaultTab="reports" />} />
-            <Route path={seg('admin-agenda')} element={<AdminModule defaultTab="agenda" />} />
-            <Route path={seg('admin-config-agenda')} element={<AdminModule defaultTab="agenda-config" />} />
+            <Route path={seg('usuarios')} element={<UsersModule />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 
-          {/* Cualquier otra ruta (incluidas URLs planas) -> no encontrada */}
           <Route path="*" element={<NotFoundOrRedirect />} />
         </Routes>
       </Suspense>

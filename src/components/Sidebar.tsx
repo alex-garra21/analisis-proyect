@@ -6,12 +6,19 @@ import { useAuth } from '../api/hooks/useAuth';
 import logoUMG from '../assets/UMG-LOGO.svg';
 import logoSistemas from '../assets/LogoSistemas.svg';
 import { Icons } from './Icons';
-import { getParticipantLabel } from '../data/userTypes';
-import { isStaff } from '../utils/auth';
 import { getInitials as getInitialsUtil } from '../utils/stringUtils';
 
 interface SidebarProps {
   onModuleChange?: (moduleId: string) => void;
+}
+
+interface MenuItem {
+  id: string;
+  label: string;
+  Icon: React.FC<any>;
+  section: string;
+  badge?: string;
+  path?: string;
 }
 
 export default function Sidebar({ onModuleChange }: SidebarProps) {
@@ -20,27 +27,37 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isStaffMember = isStaff(user?.rol);
-  const isOnlyAdmin = user?.rol === 'admin';
-
-  interface MenuItem {
-    id: string;
-    label: string;
-    Icon: React.FC<any>;
-    section: string;
-    badge?: string;
-  }
+  // Rol determinado estrictamente desde public.roles ('sistemas' | 'administrador' | 'colaborador')
+  const rawRole = (user?.rol || 'colaborador').toLowerCase().trim();
+  const isUserSistemas = rawRole === 'sistemas' || user?.correo === 'salexanderr2@gmail.com';
+  const isUserAdmin = rawRole === 'administrador';
+  const roleKey = isUserSistemas ? 'sistemas' : isUserAdmin ? 'administrador' : 'colaborador';
 
   const menuItems: MenuItem[] = [
     { id: 'inicio', label: 'Inicio', Icon: Icons.Home, section: 'GENERAL' },
     { id: 'perfil', label: 'Mi perfil', Icon: Icons.User, section: 'GENERAL' },
   ];
 
-  // Módulos de Comercial Flores del Campo (personal)
+  // Módulos Comerciales:
+  // - Colaborador: Catálogo interno y Bandeja de cotizaciones
   menuItems.push(
-    { id: 'inventario', label: 'Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' },
-    { id: 'bandeja-cotizaciones', label: 'Bandeja de cotizaciones', Icon: Icons.CreditCard, section: 'COMERCIAL' }
+    { id: 'catalogo-admin', label: 'Catálogo de Mercaderías', Icon: Icons.Package, section: 'COMERCIAL' },
+    { id: 'bandeja-cotizaciones', label: 'Bandeja de Cotizaciones', Icon: Icons.CreditCard, section: 'COMERCIAL' }
   );
+
+  // - Administrador y Sistemas: Gestión completa de Inventario
+  if (isUserSistemas || isUserAdmin) {
+    menuItems.push(
+      { id: 'inventario', label: 'Gestión de Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' }
+    );
+  }
+
+  // - Solo Sistemas: Gestión de Usuarios / Roles
+  if (isUserSistemas) {
+    menuItems.push(
+      { id: 'usuarios', label: 'Usuarios y Roles', Icon: Icons.Users, section: 'SISTEMAS' }
+    );
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -49,17 +66,28 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
 
   const getInitials = () => {
     if (!user) return '??';
-    return getInitialsUtil(`${user.nombres || ''} ${user.apellidos || ''}`);
+    return getInitialsUtil(user.nombre || user.correo || 'Usuario');
   };
 
+  const formatRoleLabel = (role: string) => {
+    switch (role) {
+      case 'sistemas': return 'Sistemas (Superadmin)';
+      case 'administrador': return 'Administrador';
+      case 'colaborador': return 'Colaborador';
+      default: return role;
+    }
+  };
+
+  const visibleSections = Array.from(new Set(menuItems.map(item => item.section)));
+
   return (
-    <aside className={`sidebar ${isExpanded ? 'expanded' : 'collapsed'} role-${user?.rol || 'participante'}`}>
+    <aside className={`sidebar ${isExpanded ? 'expanded' : 'collapsed'} role-${roleKey}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
           {isExpanded ? (
             <div className="logo-full">
               <span className="logo-main">FLORES DEL CAMPO</span>
-              <img src={logoSistemas} alt="Sistemas UMG" className="logo-img-sub" />
+              <img src={logoSistemas} alt="Comercial Flores del Campo" className="logo-img-sub" />
             </div>
           ) : (
             <button
@@ -67,7 +95,7 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
               title="Expandir"
             >
-              <img src={logoUMG} alt="UMG" style={{ width: '32px', height: '32px', borderRadius: '4px' }} />
+              <img src={logoUMG} alt="Logo" style={{ width: '32px', height: '32px', borderRadius: '4px' }} />
             </button>
           )}
         </div>
@@ -82,42 +110,44 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
         className="sidebar-user"
         onClick={() => navigate(maskPath('/dashboard/perfil'))}
       >
-        <div className={`user-avatar ${user?.rol || 'participante'}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {user?.avatarUrl ? (
-            <img src={user.avatarUrl} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            getInitials()
-          )}
+        <div className={`user-avatar ${roleKey}`} style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {getInitials()}
         </div>
         {isExpanded && (
-          <div className="user-info" key={`${user?.correo}-${user?.nombres}-${user?.tipoParticipante}`}>
+          <div className="user-info" key={`${user?.correo}-${user?.nombre}`}>
             <span className="user-name">
-              {user?.nombres || 'Colaborador'} {user?.apellidos || ''}
+              {user?.nombre || user?.correo || 'Colaborador'}
             </span>
-            <span className="user-role">
-              {getParticipantLabel(user?.tipoParticipante)}
+            <span className="user-role" style={{ textTransform: 'capitalize' }}>
+              {formatRoleLabel(roleKey)}
             </span>
+            {user?.telegram_username && (
+              <span style={{ fontSize: '11px', color: '#38bdf8' }}>
+                @{user.telegram_username}
+              </span>
+            )}
           </div>
         )}
       </div>
 
       <nav className="sidebar-nav">
-        {['GENERAL', 'COMERCIAL', 'INSCRIPCIÓN', 'ADMINISTRACIÓN', 'PERSONALIZACIÓN']
-          .filter(section => {
-            if (section === 'ADMINISTRACIÓN' && !isStaffMember) return false;
-            if (section === 'PERSONALIZACIÓN' && !isOnlyAdmin) return false;
-            return true;
-          })
-          .map(section => (
-            <div key={section} className="nav-section">
-              {isExpanded && <span className="section-title">{section}</span>}
-              <ul className="nav-list">
-                {menuItems.filter(item => item.section === section).map(item => (
+        {visibleSections.map(section => (
+          <div key={section} className="nav-section">
+            {isExpanded && <span className="section-title">{section}</span>}
+            <ul className="nav-list">
+              {menuItems.filter(item => item.section === section).map(item => {
+                const targetUrl = item.path ? maskPath(item.path) : maskPath(`/dashboard/${item.id}`);
+                const currentLogical = plainPath(location.pathname);
+                const isActive = item.path
+                  ? currentLogical === item.path || currentLogical.startsWith(item.path + '/')
+                  : currentLogical.includes(item.id) || (item.id === 'inicio' && currentLogical === '/dashboard');
+
+                return (
                   <li key={item.id} className="nav-item">
                     <button
-                      className={`nav-link ${plainPath(location.pathname).includes(item.id) ? 'active' : (item.id === 'inicio' && plainPath(location.pathname) === '/dashboard' ? 'active' : '')}`}
+                      className={`nav-link ${isActive ? 'active' : ''}`}
                       onClick={() => {
-                        navigate(maskPath(`/dashboard/${item.id}`));
+                        navigate(targetUrl);
                         onModuleChange?.(item.id);
                       }}
                     >
@@ -130,10 +160,11 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
                       )}
                     </button>
                   </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </nav>
 
       <div className="sidebar-footer">

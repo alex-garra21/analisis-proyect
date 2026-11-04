@@ -17,7 +17,12 @@
 }
 
 /* Fondos por Rol */
-.sidebar.role-admin { 
+.sidebar.role-sistemas { 
+  background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%); 
+  border-right-color: rgba(99, 102, 241, 0.3);
+}
+.sidebar.role-admin,
+.sidebar.role-administrador { 
   background: linear-gradient(180deg, #1e1b4b 0%, #0f172a 100%); 
   border-right-color: rgba(124, 58, 237, 0.2);
 }

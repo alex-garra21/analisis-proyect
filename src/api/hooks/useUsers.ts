@@ -1,65 +1,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllUsersQuery, getTokensQuery } from '../supabase/users/userQueries';
-import { useAuth } from './useAuth';
-import {
-  registerUserMutation,
-  updateUserDataMutation,
-  invalidatePaymentMutation,
-  adminValidateUserMutation,
-  deleteTokenMutation,
-  generateTokenMutation,
-  validateTokenMutation,
-  resetDiplomaStatusMutation
-} from '../supabase/users/userMutations';
-import { resetUserWorkshopsMutation } from '../supabase/enrollment/enrollmentMutations';
-import type { UserData } from '../../utils/auth';
+import { getAllUsersQuery } from '../supabase/users/userQueries';
+import { updateUserMutation, toggleUserStatusMutation } from '../supabase/users/userMutations';
 
-import { getStaleTimeByRole } from '../../utils/queryUtils';
-
-// --- QUERIES ---
-
-export function useAllUsers(enabled: boolean = true) {
-  const { session, user } = useAuth();
-  const userId = session?.user?.id;
-
+export function useAllUsers() {
   return useQuery({
-    queryKey: ['users', userId],
+    queryKey: ['users'],
     queryFn: getAllUsersQuery,
-    enabled: enabled && !!userId,
-    staleTime: getStaleTimeByRole(user?.rol),
+    staleTime: 1000 * 60 * 2,
   });
 }
 
-export function useTokens() {
-  const { session, user } = useAuth();
-  const userId = session?.user?.id;
-
-  return useQuery({
-    queryKey: ['tokens', userId],
-    queryFn: getTokensQuery,
-    enabled: !!userId,
-    staleTime: getStaleTimeByRole(user?.rol),
-  });
-}
-
-// --- MUTATIONS ---
-
-export function useRegisterUser() {
+export function useUpdateUser() {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: (user: UserData) => registerUserMutation(user),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-    },
-  });
-}
-
-export function useUpdateUserData() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (updatedData: UserData) => updateUserDataMutation(updatedData),
+    mutationFn: ({ userId, data }: { userId: string; data: any }) => updateUserMutation(userId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['userProfile'] });
@@ -67,93 +21,13 @@ export function useUpdateUserData() {
   });
 }
 
-export function useInvalidatePayment() {
+export function useToggleUserStatus() {
   const queryClient = useQueryClient();
-  
   return useMutation({
-    mutationFn: (userId: string) => invalidatePaymentMutation(userId),
-    onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['tokens'] });
-      queryClient.invalidateQueries({ queryKey: ['enrollments', userId] });
-      queryClient.invalidateQueries({ queryKey: ['attendances', userId] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-  });
-}
-
-export function useAdminValidateUser() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ userId, adminId }: { userId: string; adminId?: string }) => adminValidateUserMutation(userId, adminId),
+    mutationFn: ({ userId, estado }: { userId: string; estado: boolean }) =>
+      toggleUserStatusMutation(userId, estado),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['tokens'] });
-    },
-  });
-}
-
-export function useDeleteToken() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (code: string) => deleteTokenMutation(code),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tokens'] });
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
-      queryClient.invalidateQueries({ queryKey: ['attendances'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-  });
-}
-
-export function useGenerateToken() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ code, adminId }: { code: string; adminId?: string }) => generateTokenMutation(code, adminId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tokens'] });
-    },
-  });
-}
-
-export function useValidateToken() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: ({ code }: { code: string }) => validateTokenMutation(code),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['tokens'] });
-    },
-  });
-}
-
-export function useResetDiplomaStatus() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (userId: string) => resetDiplomaStatusMutation(userId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
-    },
-  });
-}
-
-export function useResetUserWorkshops() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: (userId: string) => resetUserWorkshopsMutation(userId),
-    onSuccess: (_, userId) => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ queryKey: ['enrollments', userId] });
-      queryClient.invalidateQueries({ queryKey: ['attendances', userId] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
     },
   });
 }

@@ -19,7 +19,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <div className={`search-bar-container ${className}`} style={{ position: 'relative', width: '100%', maxWidth: '400px', ...style }}>
       <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex' }}>
-        <Icons.Search size={18} color="var(--text-secondary)" />
+        <Icons.Search size={17} color="var(--text-muted)" />
       </div>
       <input
         type="text"
@@ -28,15 +28,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
         placeholder={placeholder}
         style={{
           width: '100%',
-          padding: '12px 12px 12px 42px',
+          padding: '10px 14px 10px 38px',
           fontSize: '14px',
-          background: 'var(--bg-primary)',
-          border: '1.5px solid var(--border-soft)',
+          background: 'var(--bg-input)',
+          border: '1px solid var(--border-med)',
           borderRadius: '10px',
           color: 'var(--text-primary)',
           outline: 'none',
-          transition: 'all 0.2s ease',
-          fontFamily: "'Source Sans 3', sans-serif"
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          fontFamily: "'Source Sans 3', sans-serif",
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         }}
         className="search-input-focus"
       />

@@ -75,15 +75,11 @@ export default function DeactivatedPage() {
             padding: '4px',
             background: 'white'
           }}>
-            {user?.avatarUrl ? (
-              <img src={user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '32px', fontWeight: 800 }}>
-                {user?.nombres?.charAt(0)}
-              </div>
-            )}
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '32px', fontWeight: 800 }}>
+              {user?.nombre?.charAt(0) || user?.correo?.charAt(0) || 'U'}
+            </div>
           </div>
-          <h2 style={{ fontFamily: 'Source Sans 3', fontSize: '24px', margin: '0 0 8px' }}>{user?.nombres} {user?.apellidos}</h2>
+          <h2 style={{ fontFamily: 'Source Sans 3', fontSize: '24px', margin: '0 0 8px' }}>{user?.nombre || 'Usuario'}</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>{user?.correo}</p>
         </div>
 

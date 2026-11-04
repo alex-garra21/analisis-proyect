@@ -9,7 +9,7 @@ import { maskPath, plainPath } from '../routes/routeMap';
 export default function Navbar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
@@ -23,110 +23,213 @@ export default function Navbar() {
     return () => window.removeEventListener('openRegisterModal', handleOpenRegister);
   }, []);
 
-  const handleAuthAction = (action: 'login' | 'register') => {
+  // Cierra el menú móvil al navegar
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const handleLoginClick = () => {
     if (isAuthenticated && user) {
-      // Si ya está logueado, redirigir al dashboard
-      if (user.rol === 'admin') {
-        navigate(maskPath('/dashboard/admin-tokens'));
-      } else {
-        navigate(maskPath('/dashboard/inicio'));
-      }
+      navigate(maskPath('/dashboard/inicio'));
     } else {
-      // Si no, abrir modales
-      setIsMenuOpen(false);
-      if (action === 'login') {
-        setIsRegisterOpen(false);
-        setIsLoginOpen(true);
-      } else {
-        setIsLoginOpen(false);
-        setIsRegisterOpen(true);
-      }
+      setIsRegisterOpen(false);
+      setIsLoginOpen(true);
     }
   };
 
-  const openLogin = () => handleAuthAction('login');
-  const openRegister = () => handleAuthAction('register');
+  const handleRegisterClick = () => {
+    if (isAuthenticated && user) {
+      navigate(maskPath('/dashboard/perfil'));
+    } else {
+      setIsLoginOpen(false);
+      setIsRegisterOpen(true);
+    }
+  };
+
+  const handleMobileLogin = () => {
+    setIsMobileMenuOpen(false);
+    handleLoginClick();
+  };
+
+  const handleMobileRegister = () => {
+    setIsMobileMenuOpen(false);
+    handleRegisterClick();
+  };
 
   const current = plainPath(location.pathname);
   const isActive = (path: string) => current === path || (path !== '/' && current.startsWith(path + '/'));
 
   const navLinks = [
-    { name: 'Inicio', path: '/', Icon: Icons.Home },
-    { name: 'Catálogo', path: '/catalogo', Icon: Icons.Info },
+    { name: 'Inicio', path: '/' },
+    { name: 'Catálogo', path: '/catalogo' },
   ];
 
   return (
     <>
-      <nav className="nav">
-        <div className="nav-mobile-left">
-          <button className="menu-toggle" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <Icons.X size={24} /> : <Icons.Menu size={24} />}
+      <nav className="nav" style={{ width: '100%', position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-card, #ffffff)', borderBottom: '1px solid var(--border-soft, #e2e8f0)' }}>
+        <div className="nav-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
+          {/* Lado Izquierdo: Logotipo y Enlaces (Desktop) */}
+          <div className="nav-left-group" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <ul className="nav-links desktop-nav hidden md:flex" style={{ alignItems: 'center', gap: '1.5rem', listStyle: 'none', margin: 0, padding: 0 }}>
+              {navLinks.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    to={maskPath(link.path)}
+                    className={isActive(link.path) ? 'active' : ''}
+                    style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      textDecoration: 'none',
+                      color: isActive(link.path) ? 'var(--accent-primary, #185FA5)' : 'var(--text-secondary, #64748b)',
+                      borderBottom: isActive(link.path) ? '2px solid var(--accent-primary, #185FA5)' : '2px solid transparent',
+                      paddingBottom: '4px',
+                      transition: 'color 0.2s, border-color 0.2s'
+                    }}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Lado Derecho: Botones de Acción (Desktop) */}
+          <div className="nav-right desktop-nav hidden md:flex" style={{ alignItems: 'center', gap: '0.75rem', marginLeft: 'auto' }}>
+            {isAuthenticated ? (
+              <>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={handleLoginClick}
+                >
+                  Ir al Dashboard
+                </button>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  onClick={handleRegisterClick}
+                >
+                  Mi Cuenta
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={handleLoginClick}
+                >
+                  Iniciar sesión
+                </button>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  onClick={handleRegisterClick}
+                >
+                  <Icons.Telegram size={16} />
+                  <span>Cotiza por Telegram</span>
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Botón Hamburguesa Móvil (Visible solo en pantallas pequeñas) */}
+          <button
+            type="button"
+            className="nav-mobile-toggle flex md:hidden"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          >
+            {isMobileMenuOpen ? <Icons.X size={22} /> : <Icons.Menu size={22} />}
           </button>
         </div>
 
-        <ul className="nav-links">
-          {navLinks.map(link => (
-            <li key={link.path}>
-              <Link to={maskPath(link.path)} className={isActive(link.path) ? 'active' : ''}>
-                {link.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Menú Desplegable Móvil */}
+        {isMobileMenuOpen && (
+          <div className="nav-mobile-dropdown md:hidden">
+            <ul className="nav-mobile-links">
+              {navLinks.map((link) => (
+                <li key={link.path}>
+                  <Link
+                    to={maskPath(link.path)}
+                    className={isActive(link.path) ? 'active' : ''}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-        <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <button className="btn-ghost" onClick={openLogin}>
-            {isAuthenticated ? 'Ir al Dashboard' : 'Iniciar sesión'}
-          </button>
-          <button className="btn-solid" onClick={openRegister}>
-            {isAuthenticated ? 'Mi Cuenta' : 'Cotiza por Telegram'}
-          </button>
-        </div>
+            <div className="nav-mobile-actions">
+              {isAuthenticated ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={handleMobileLogin}
+                  >
+                    Ir al Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-solid"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={handleMobileRegister}
+                  >
+                    Mi Cuenta
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={handleMobileLogin}
+                  >
+                    Iniciar sesión
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-solid"
+                    style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                    onClick={handleMobileRegister}
+                  >
+                    <Icons.Telegram size={16} />
+                    <span>Cotiza por Telegram</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
-      {/* Sidebar Mobile */}
-      <div className={`mobile-sidebar-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}>
-        <aside className={`mobile-sidebar ${isMenuOpen ? 'open' : ''}`} onClick={e => e.stopPropagation()}>
-          <div className="sidebar-header-mobile">
-            <span className="logo-text">MENÚ</span>
-            <button className="close-sidebar" onClick={() => setIsMenuOpen(false)}>
-              <Icons.X size={24} />
-            </button>
-          </div>
+      {/* Modales de Autenticación */}
+      {isLoginOpen && (
+        <LoginModal
+          isOpen={isLoginOpen}
+          onClose={() => setIsLoginOpen(false)}
+          onSwitchToRegister={() => {
+            setIsLoginOpen(false);
+            setIsRegisterOpen(true);
+          }}
+        />
+      )}
 
-          <ul className="mobile-nav-list">
-            {navLinks.map(link => (
-              <li key={link.path}>
-                <Link
-                  to={maskPath(link.path)}
-                  className={isActive(link.path) ? 'active' : ''}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <link.Icon size={20} className="nav-icon-svg" />
-                  <span>{link.name}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <div className="sidebar-footer-mobile">
-            <button className="btn-sidebar-login" onClick={openLogin}>Iniciar sesión</button>
-            <button className="btn-sidebar-register" onClick={openRegister}>Regístrate aquí</button>
-          </div>
-        </aside>
-      </div>
-
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onSwitchToRegister={openRegister}
-      />
-
-      <RegisterModal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-        onSwitchToLogin={openLogin}
-      />
+      {isRegisterOpen && (
+        <RegisterModal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onSwitchToLogin={() => {
+            setIsRegisterOpen(false);
+            setIsLoginOpen(true);
+          }}
+        />
+      )}
     </>
   );
 }

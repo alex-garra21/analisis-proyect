@@ -454,4 +454,38 @@ export const Icons = {
       <polyline points="7 3 7 8 15 8" />
     </BaseIcon>
   ),
+  ShoppingCart: (props: IconProps) => (
+    <BaseIcon {...props}>
+      <circle cx="9" cy="21" r="1" />
+      <circle cx="20" cy="21" r="1" />
+      <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+    </BaseIcon>
+  ),
+  Package: (props: IconProps) => (
+    <BaseIcon {...props}>
+      <line x1="16.5" y1="9.4" x2="7.5" y2="4.21" />
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </BaseIcon>
+  ),
+  ArrowRight: (props: IconProps) => (
+    <BaseIcon {...props}>
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
+    </BaseIcon>
+  ),
+  Layers: (props: IconProps) => (
+    <BaseIcon {...props}>
+      <polygon points="12 2 2 7 12 12 22 7 12 2" />
+      <polyline points="2 17 12 22 22 17" />
+      <polyline points="2 12 12 17 22 12" />
+    </BaseIcon>
+  ),
+  Power: (props: IconProps) => (
+    <BaseIcon {...props}>
+      <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+      <line x1="12" y1="2" x2="12" y2="12" />
+    </BaseIcon>
+  ),
 };

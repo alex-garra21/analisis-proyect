@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Icons } from './Icons';
 
 interface PasswordFieldProps {
-  label: React.ReactNode;
+  label?: React.ReactNode;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   name?: string;

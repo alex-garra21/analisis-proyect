@@ -32,11 +32,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
     onClose();
   };
 
-  const handleSwitch = () => {
-    clearFields();
-    if (onSwitchToRegister) onSwitchToRegister();
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -47,76 +42,92 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
     if (result.success) {
       clearFields();
       onClose();
-      if (result.user?.rol === 'admin') {
-        navigate(maskPath('/dashboard/admin'));
-      } else {
-        // Colaboradores y Participantes van al inicio
-        navigate(maskPath('/dashboard/inicio'));
-      }
+      showToast('Sesión iniciada con éxito', 'success');
+      navigate(maskPath('/dashboard/inicio'));
     } else {
-      showToast(result.message, 'error');
+      showToast(result.error || 'Credenciales incorrectas', 'error');
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title="Iniciar sesión"
-      maxWidth="440px"
-      zIndex={9999}
-    >
-      <p className="modal-sub" style={{ marginBottom: '0.5rem' }}>Accede para ver tus charlas y estado de pago</p>
-      <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '1.5rem' }}>
-        Los campos marcados con <span style={{ color: '#ef4444' }}>*</span> son obligatorios.
-      </p>
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} title="Iniciar Sesión" maxWidth="420px">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <FormField label="Correo Electrónico">
+            <input
+              type="email"
+              required
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              placeholder="ejemplo@floresdelcampo.com"
+              className="dashboard-input"
+            />
+          </FormField>
 
+          <FormField label="Contraseña">
+            <PasswordField
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              placeholder="Tu contraseña"
+              required
+            />
+          </FormField>
 
-      <form onSubmit={handleSubmit}>
-        <FormField label="Correo Electrónico" required>
-          <input
-            type="email"
-            value={correo}
-            onChange={(e) => setCorreo(e.target.value)}
-            placeholder="correo@ejemplo.com"
-            required
-            className="dashboard-input"
-          />
-        </FormField>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => setIsForgotOpen(true)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#185FA5',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
 
-        <PasswordField
-          label={<>Contraseña <span style={{ color: '#ef4444' }}>*</span></>}
-          value={contrasena}
-          onChange={(e) => setContrasena(e.target.value)}
-          placeholder="Tu contraseña"
-          required
-          autoComplete="current-password"
-          style={{ marginBottom: '1.5rem' }}
-        />
+          <div style={{ marginTop: '0.5rem' }}>
+            <LoadingButton type="submit" isLoading={isLoading} className="btn-solid" style={{ width: '100%' }}>
+              Ingresar al Sistema
+            </LoadingButton>
+          </div>
 
-        <LoadingButton
-          type="submit"
-          isLoading={isLoading}
-          loadingText="Verificando..."
-          fullWidth
-          style={{ marginBottom: '1rem' }}
-        >
-          Ingresar
-        </LoadingButton>
-      </form>
-
-      <div style={{ marginTop: '1.5rem', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <p className="switch-link" style={{ fontSize: '13px', margin: 0 }}>
-          ¿Aún no tienes cuenta? <span onClick={handleSwitch} style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--accent-primary)' }}>Regístrate aquí</span>
-        </p>
-        <p className="switch-link" style={{ fontSize: '13px', margin: 0 }}>
-          ¿Olvidaste tu contraseña? <span onClick={() => setIsForgotOpen(true)} style={{ cursor: 'pointer', fontWeight: 700, color: 'var(--accent-primary)' }}>Recupérala aquí</span>
-        </p>
-      </div>
+          {onSwitchToRegister && (
+            <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+              ¿Aún no tienes cuenta?{' '}
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  onSwitchToRegister();
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#185FA5',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Regístrate aquí
+              </button>
+            </div>
+          )}
+        </form>
+      </Modal>
 
       {isForgotOpen && (
-        <ForgotPasswordModal onClose={() => setIsForgotOpen(false)} />
+        <ForgotPasswordModal
+          onClose={() => setIsForgotOpen(false)}
+        />
       )}
-    </Modal>
+    </>
   );
 }
