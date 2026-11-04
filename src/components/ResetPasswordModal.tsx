@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { changePassword, validatePasswordStrength } from '../utils/auth';
 import PasswordField from './PasswordField';
 import { Icons } from './Icons';
-import PasswordRequirements from './PasswordRequirements';
 import Modal from './ui/Modal';
 import { showToast } from '../utils/swal';
-import { supabase } from '../utils/supabase';
 
 interface ResetPasswordModalProps {
   isOpen: boolean;
@@ -14,48 +12,36 @@ interface ResetPasswordModalProps {
 
 export default function ResetPasswordModal({ isOpen, onClose }: ResetPasswordModalProps) {
   const [formData, setFormData] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
-  const [userProfile, setUserProfile] = useState<{ name: string; email: string; avatar?: string } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchUserProfile();
-    }
-  }, [isOpen]);
+  const clearFields = () => {
+    setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setShowSuccess(false);
+    setIsSubmitting(false);
+  };
 
-  const fetchUserProfile = async () => {
-    setIsLoadingProfile(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('usuarios')
-          .select('nombres, apellidos, correo, avatar_url')
-          .eq('id', user.id)
-          .single();
-
-        if (profile) {
-          setUserProfile({
-            name: `${profile.nombres} ${profile.apellidos}`,
-            email: profile.correo,
-            avatar: profile.avatar_url
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching profile for reset:", err);
-    } finally {
-      setIsLoadingProfile(false);
-    }
+  const handleClose = () => {
+    clearFields();
+    onClose();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.currentPassword) {
+      showToast('Debes ingresar tu contraseña actual.', 'warning');
+      return;
+    }
+
+    if (formData.newPassword === formData.currentPassword) {
+      showToast('La nueva contraseña no puede ser igual a la actual.', 'warning');
+      return;
+    }
 
     const passwordValidation = validatePasswordStrength(formData.newPassword);
     if (!passwordValidation.isValid) {
@@ -69,7 +55,7 @@ export default function ResetPasswordModal({ isOpen, onClose }: ResetPasswordMod
     }
 
     setIsSubmitting(true);
-    const result = await changePassword(formData.newPassword);
+    const result = await changePassword(formData.newPassword, formData.currentPassword);
     setIsSubmitting(false);
 
     if (result.success) {
@@ -79,137 +65,226 @@ export default function ResetPasswordModal({ isOpen, onClose }: ResetPasswordMod
     }
   };
 
-  const handleClose = () => {
-    setFormData({ newPassword: '', confirmPassword: '' });
-    setShowSuccess(false);
-    setUserProfile(null);
-    onClose();
-  };
-
   const currentPasswordStrength = formData.newPassword.length > 0 ? validatePasswordStrength(formData.newPassword) : null;
   const passwordsMatch = formData.newPassword.length > 0 && formData.newPassword === formData.confirmPassword;
   const showMatchError = formData.confirmPassword.length > 0 && !passwordsMatch;
+
+  const requirements = [
+    { id: 'length', label: 'Mínimo 6 caracteres', met: formData.newPassword.length >= 6 },
+    { id: 'uppercase', label: 'Al menos 1 letra mayúscula (A..Z)', met: /[A-Z]/.test(formData.newPassword) },
+    { id: 'lowercase', label: 'Al menos 1 letra minúscula (a..z)', met: /[a-z]/.test(formData.newPassword) },
+    { id: 'number', label: 'Al menos 1 número (0..9)', met: /[0-9]/.test(formData.newPassword) },
+  ];
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={showSuccess ? "¡Contraseña Actualizada!" : "Nueva Contraseña"}
-      maxWidth="400px"
+      maxWidth="680px"
+      padding="2.5rem 2.25rem"
       zIndex={10001}
     >
       {showSuccess ? (
-        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
-            <Icons.CheckCircle size={70} color="#7ed321" />
+        <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+          <div style={{ marginBottom: '1.25rem', display: 'flex', justifyContent: 'center' }}>
+            <Icons.CheckCircle size={64} color="#16a34a" />
           </div>
-          <p className="modal-sub" style={{ marginBottom: '2rem' }}>
-            Tu contraseña ha sido restablecida correctamente. Ya puedes acceder a tu cuenta.
+          <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#1e293b', marginBottom: '0.5rem', fontFamily: 'Source Sans 3, sans-serif' }}>
+            ¡Contraseña Actualizada!
+          </h3>
+          <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '380px', margin: '0 auto 1.75rem', lineHeight: 1.5 }}>
+            Tu contraseña ha sido restablecida correctamente. Ya puedes acceder con tu nueva credencial.
           </p>
-          <button className="submit-btn" onClick={handleClose}>Ir al inicio</button>
+          <button
+            type="button"
+            className="submit-btn"
+            style={{ maxWidth: '220px', margin: '0 auto', display: 'block', borderRadius: '8px', padding: '10px 20px' }}
+            onClick={handleClose}
+          >
+            Aceptar
+          </button>
         </div>
       ) : (
-        <>
-          {/* Perfil de Usuario Verificado */}
-          <div style={{
-            background: 'var(--accent-light)',
-            padding: '1rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            border: '1px solid var(--border-soft)'
-          }}>
-            {isLoadingProfile ? (
-              <div style={{ height: '40px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'var(--accent-primary)' }}>Verificando cuenta...</span>
-              </div>
-            ) : (
-              <>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '50%',
-                  background: 'var(--accent-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'white',
-                  overflow: 'hidden',
-                  flexShrink: 0,
-                  fontSize: '18px',
-                  fontWeight: 800
-                }}>
-                  {userProfile?.avatar ? (
-                    <img src={userProfile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    userProfile?.name.charAt(0) || '?'
-                  )}
-                </div>
-                <div style={{ overflow: 'hidden' }}>
-                  <h4 style={{ margin: 0, fontSize: '14px', fontFamily: 'Source Sans 3', color: 'var(--accent-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {userProfile?.name || 'Colaborador'}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {userProfile?.email}
-                  </p>
-                </div>
-              </>
-            )}
+        <div className="pwd-modal-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '2.5rem',
+          alignItems: 'start'
+        }}>
+          {/* Columna Izquierda: Título y Requisitos de Seguridad */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{
+              fontSize: '26px',
+              fontWeight: 700,
+              color: '#2C221E',
+              fontFamily: 'Source Sans 3, sans-serif',
+              margin: '0 0 1rem 0',
+              letterSpacing: '-0.3px',
+              lineHeight: 1.2
+            }}>
+              Cambiar contraseña
+            </h2>
+
+            <p style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#7C6E67',
+              margin: '0 0 1.25rem 0',
+              letterSpacing: '0.2px'
+            }}>
+              La contraseña debe contener:
+            </p>
+
+            <ul style={{
+              listStyle: 'none',
+              padding: 0,
+              margin: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.85rem'
+            }}>
+              {requirements.map((req) => {
+                const isMet = req.met;
+                return (
+                  <li
+                    key={req.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      color: isMet ? '#16A34A' : '#7C6E67',
+                      transition: 'color 0.2s ease'
+                    }}
+                  >
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '18px',
+                      height: '18px',
+                      flexShrink: 0
+                    }}>
+                      <Icons.Check size={16} color={isMet ? '#16A34A' : '#C85A32'} />
+                    </span>
+                    <span>{req.label}</span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
-          <p className="modal-sub" style={{ marginBottom: '1.5rem', fontSize: '13px' }}>
-            Hola <strong>{userProfile?.name.split(' ')[0]}</strong>, ingresa tu nueva contraseña a continuación.
-          </p>
+          {/* Columna Derecha: 3 Campos Verticales y Botones de Acción */}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* Campo 1: Contraseña Actual */}
+            <div style={{ marginBottom: '1rem' }}>
+              <PasswordField
+                label="Contraseña Actual"
+                value={formData.currentPassword}
+                onChange={e => setFormData({ ...formData, currentPassword: e.target.value })}
+                placeholder="••••••••"
+                required
+                success={formData.currentPassword.length >= 6}
+                autoComplete="current-password"
+                style={{ marginBottom: 0 }}
+              />
+            </div>
 
+            {/* Separador Visual entre Contraseña Actual y Nueva Contraseña */}
+            <div style={{
+              height: '1px',
+              background: '#E6DFD5',
+              margin: '0.25rem 0 1.25rem'
+            }} />
 
-          <form onSubmit={handleSubmit}>
-            <PasswordField
-              label="Nueva Contraseña"
-              value={formData.newPassword}
-              onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
-              placeholder="Min. 6 caracteres"
-              required
-              success={currentPasswordStrength?.isValid}
-              autoComplete="new-password"
-            />
+            {/* Campo 2: Nueva Contraseña */}
+            <div style={{ marginBottom: '1rem' }}>
+              <PasswordField
+                label="Nueva Contraseña"
+                value={formData.newPassword}
+                onChange={e => setFormData({ ...formData, newPassword: e.target.value })}
+                placeholder="••••••••"
+                required
+                success={currentPasswordStrength?.isValid}
+                autoComplete="new-password"
+                style={{ marginBottom: 0 }}
+              />
+            </div>
 
-            <div style={{ marginTop: '-10px' }}>
-              {formData.newPassword.length > 0 && (
-                <PasswordRequirements requirements={currentPasswordStrength?.requirements || []} />
-              )}
-              {!formData.newPassword && (
-                <div style={{ fontSize: '15px', color: '#ff0000', marginBottom: '20px', fontWeight: 500 }}>
-                  Requisitos: 6 caracteres, Mayúscula, Minúscula y Número.
-                </div>
+            {/* Campo 3: Confirmar Nueva Contraseña */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <PasswordField
+                label="Confirmar Nueva Contraseña"
+                value={formData.confirmPassword}
+                onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
+                placeholder="••••••••"
+                required
+                success={passwordsMatch}
+                error={showMatchError}
+                autoComplete="new-password"
+                style={{ marginBottom: 0 }}
+              />
+              {showMatchError && (
+                <span style={{ fontSize: '12px', color: '#DC2626', fontWeight: 600, display: 'block', marginTop: '4px' }}>
+                  Las contraseñas no coinciden.
+                </span>
               )}
             </div>
 
-            <PasswordField
-              label="Confirmar Nueva Contraseña"
-              value={formData.confirmPassword}
-              onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-              placeholder="********"
-              required
-              success={passwordsMatch}
-              error={showMatchError}
-              autoComplete="new-password"
-              style={{ marginBottom: '2rem' }}
-            />
+            {/* Botones de Acción (SAVE y Cancelar) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                style={{
+                  width: '100%',
+                  padding: '12px 20px',
+                  background: '#C85A32',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  letterSpacing: '0.8px',
+                  textTransform: 'uppercase',
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  boxShadow: 'none',
+                  transition: 'background-color 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => { if (!isSubmitting) e.currentTarget.style.background = '#B04A25'; }}
+                onMouseLeave={(e) => { if (!isSubmitting) e.currentTarget.style.background = '#C85A32'; }}
+              >
+                {isSubmitting ? 'Guardando...' : 'GUARDAR'}
+              </button>
 
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={isSubmitting || isLoadingProfile}
-              style={{ width: '100%', opacity: (isSubmitting || isLoadingProfile) ? 0.7 : 1 }}
-            >
-              {isSubmitting ? 'Guardando...' : 'Restablecer Contraseña'}
-            </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                disabled={isSubmitting}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#7C6E67',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 12px',
+                  transition: 'color 0.2s ease'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#2C221E')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#7C6E67')}
+              >
+                Cancelar
+              </button>
+            </div>
           </form>
-        </>
+        </div>
       )}
     </Modal>
   );
 }
-

@@ -3,8 +3,7 @@ import { maskPath, plainPath } from '../routes/routeMap';
 import { supabase } from '../utils/supabase';
 import React, { useState } from 'react';
 import { useAuth } from '../api/hooks/useAuth';
-import logoUMG from '../assets/UMG-LOGO.svg';
-import logoSistemas from '../assets/LogoSistemas.svg';
+import { useDashboardTitle } from '../utils/DashboardTitleContext';
 import { Icons } from './Icons';
 import { getInitials as getInitialsUtil } from '../utils/stringUtils';
 
@@ -24,6 +23,7 @@ interface MenuItem {
 export default function Sidebar({ onModuleChange }: SidebarProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { user } = useAuth();
+  const { setTitle } = useDashboardTitle();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,10 +45,16 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
     { id: 'bandeja-cotizaciones', label: 'Bandeja de Cotizaciones', Icon: Icons.CreditCard, section: 'COMERCIAL' }
   );
 
-  // - Administrador y Sistemas: Gestión completa de Inventario
+  // - Colaborador, Administrador y Sistemas: Clientes
+  menuItems.push(
+    { id: 'clientes', label: 'Gestión de Clientes', Icon: Icons.Users, section: 'COMERCIAL' }
+  );
+
+  // - Administrador y Sistemas: Gestión completa de Inventario y Categorías
   if (isUserSistemas || isUserAdmin) {
     menuItems.push(
-      { id: 'inventario', label: 'Gestión de Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' }
+      { id: 'inventario', label: 'Gestión de Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' },
+      { id: 'categorias', label: 'Gestión de Categorías', Icon: Icons.Layers, section: 'COMERCIAL' }
     );
   }
 
@@ -82,26 +88,39 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
 
   return (
     <aside className={`sidebar ${isExpanded ? 'expanded' : 'collapsed'} role-${roleKey}`}>
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          {isExpanded ? (
-            <div className="logo-full">
+      <div
+        className="sidebar-header"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: isExpanded ? 'space-between' : 'center',
+          padding: isExpanded ? '1.5rem' : '1rem 0.5rem',
+        }}
+      >
+        {isExpanded ? (
+          <>
+            <div className="sidebar-logo">
               <span className="logo-main">FLORES DEL CAMPO</span>
-              <img src={logoSistemas} alt="Comercial Flores del Campo" className="logo-img-sub" />
             </div>
-          ) : (
             <button
-              onClick={() => setIsExpanded(true)}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
-              title="Expandir"
+              type="button"
+              className="expand-toggle"
+              onClick={() => setIsExpanded(false)}
+              title="Contraer barra lateral"
+              aria-label="Contraer barra lateral"
             >
-              <img src={logoUMG} alt="Logo" style={{ width: '32px', height: '32px', borderRadius: '4px' }} />
+              <Icons.ChevronLeft size={16} />
             </button>
-          )}
-        </div>
-        {isExpanded && (
-          <button className="expand-toggle" onClick={() => setIsExpanded(false)}>
-            <Icons.ChevronLeft size={16} />
+          </>
+        ) : (
+          <button
+            type="button"
+            className="expand-toggle"
+            onClick={() => setIsExpanded(true)}
+            title="Expandir barra lateral"
+            aria-label="Expandir barra lateral"
+          >
+            <Icons.ChevronRight size={18} />
           </button>
         )}
       </div>
@@ -147,6 +166,7 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
                     <button
                       className={`nav-link ${isActive ? 'active' : ''}`}
                       onClick={() => {
+                        setTitle(item.label);
                         navigate(targetUrl);
                         onModuleChange?.(item.id);
                       }}

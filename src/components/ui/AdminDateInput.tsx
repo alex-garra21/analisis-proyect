@@ -56,7 +56,7 @@ const AdminDateInput: React.FC<AdminDateInputProps> = ({
         }}
         onFocus={(e) => {
           e.currentTarget.style.border = '1.5px solid var(--accent-primary)';
-          e.currentTarget.style.boxShadow = '0 0 0 4px rgba(24, 95, 165, 0.1)';
+          e.currentTarget.style.boxShadow = '0 0 0 4px rgba(200, 90, 50, 0.15)';
         }}
         onBlur={(e) => {
           e.currentTarget.style.border = '1.5px solid var(--border-soft)';

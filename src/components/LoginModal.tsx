@@ -82,7 +82,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               style={{
                 background: 'none',
                 border: 'none',
-                color: '#185FA5',
+                color: '#C85A32',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -111,7 +111,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#185FA5',
+                  color: '#C85A32',
                   fontWeight: 700,
                   cursor: 'pointer',
                 }}

@@ -1,17 +1,20 @@
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { useCotizaciones } from '../../api/hooks/useComercial';
 import { formatQuetzales } from '../../types/database';
-import { createMaskedUrl } from '../../utils/routerHasher';
-import { maskPath } from '../../routes/routeMap';
 import AdminTable from '../../components/ui/AdminTable';
+import { Icons } from '../../components/Icons';
+import CotizacionManualModal from '../../modules/operaciones/cotizaciones/CotizacionManualModal';
+import CotizacionDetalleModal from '../../modules/operaciones/cotizaciones/CotizacionDetalleModal';
 
 /**
  * Bandeja de Cotizaciones (Ruta Protegida):
  * Consulta directa a public.cotizaciones vinculada con public.clientes y public.usuarios.
+ * La visualización de detalle está blindada internamente en modal sin exponer rutas públicas.
  */
 export default function BandejaCotizacionesPage() {
-  const navigate = useNavigate();
   const { data: cotizaciones = [], isLoading } = useCotizaciones();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedCotizacionId, setSelectedCotizacionId] = useState<number | null>(null);
 
   const pendientes = cotizaciones.filter((c) => c.estado === 'Pendiente');
 
@@ -38,11 +41,37 @@ export default function BandejaCotizacionesPage() {
   };
 
   return (
-    <div style={{ color: 'var(--text-primary)' }}>
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <div className="bandeja-cotizaciones-module" style={{ color: 'var(--text-primary)' }}>
+      <div
+        style={{
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
         <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '14px' }}>
-          <strong>{pendientes.length}</strong> cotización(es) con estado <em>Pendiente</em>.
+          <strong>{pendientes.length}</strong> cotización(es) con estado <em>Pendiente</em> de un total de <strong>{cotizaciones.length}</strong> registradas.
         </p>
+
+        <button
+          type="button"
+          className="btn-solid"
+          onClick={() => setIsCreateModalOpen(true)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '9px 18px',
+            fontSize: '13px',
+            fontWeight: 600,
+          }}
+        >
+          <Icons.Plus size={16} />
+          <span>Nueva Cotización</span>
+        </button>
       </div>
 
       <AdminTable
@@ -55,7 +84,7 @@ export default function BandejaCotizacionesPage() {
             key={c.id}
             id={`bandeja-${c.codigo_cotizacion}`}
             style={{ cursor: 'pointer' }}
-            onClick={() => navigate(createMaskedUrl(maskPath('/cotizaciones'), c.id))}
+            onClick={() => setSelectedCotizacionId(c.id)}
           >
             <td>
               <strong style={{ fontFamily: 'ui-monospace, monospace', color: 'var(--text-primary)' }}>
@@ -73,8 +102,8 @@ export default function BandejaCotizacionesPage() {
                   textTransform: 'uppercase',
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  background: c.canal_origen === 'telegram' ? 'rgba(0, 136, 204, 0.12)' : 'rgba(24, 95, 165, 0.1)',
-                  color: c.canal_origen === 'telegram' ? '#0088cc' : '#185FA5',
+                  background: c.canal_origen === 'telegram' ? 'rgba(0, 136, 204, 0.12)' : 'rgba(200, 90, 50, 0.1)',
+                  color: c.canal_origen === 'telegram' ? '#0088cc' : '#C85A32',
                 }}
               >
                 {c.canal_origen}
@@ -89,7 +118,7 @@ export default function BandejaCotizacionesPage() {
                 style={{ padding: '6px 12px', fontSize: '12px' }}
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(createMaskedUrl(maskPath('/cotizaciones'), c.id));
+                  setSelectedCotizacionId(c.id);
                 }}
               >
                 Ver detalle
@@ -98,6 +127,19 @@ export default function BandejaCotizacionesPage() {
           </tr>
         ))}
       </AdminTable>
+
+      {/* Modal de Creación Manual */}
+      <CotizacionManualModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Modal Interno Protegido para Ver Detalle de Cotización */}
+      <CotizacionDetalleModal
+        isOpen={Boolean(selectedCotizacionId)}
+        onClose={() => setSelectedCotizacionId(null)}
+        cotizacionId={selectedCotizacionId}
+      />
     </div>
   );
 }

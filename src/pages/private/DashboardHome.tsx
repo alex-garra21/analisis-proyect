@@ -76,7 +76,7 @@ export default function DashboardHome() {
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(24, 95, 165, 0.1)', color: '#185FA5' }}>
+            <div style={{ padding: '10px', borderRadius: '10px', background: 'rgba(200, 90, 50, 0.1)', color: '#C85A32' }}>
               <Icons.Package size={24} />
             </div>
             <div>

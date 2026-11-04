@@ -6,6 +6,7 @@ export type UserRole = RoleName;
 export interface UserData {
   id: string; // UUID de auth.users
   nombre: string;
+  apellido?: string | null;
   correo: string;
   rol_id: number | null;
   rol: UserRole;
@@ -84,16 +85,78 @@ export async function sendPasswordResetEmail(email: string): Promise<{ success: 
   }
 }
 
-export async function changePassword(newPassword: string): Promise<{ success: boolean; message: string; error?: string }> {
+export async function changePassword(
+  newPassword: string,
+  currentPassword?: string
+): Promise<{ success: boolean; message: string; error?: string }> {
   try {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return { success: false, message: error.message, error: error.message };
-    return { success: true, message: 'Contraseña actualizada correctamente.' };
+    // 1. Validar requisitos mínimos de seguridad en la nueva contraseña
+    const validation = validatePasswordStrength(newPassword);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message: validation.message || 'La contraseña no cumple con los requisitos mínimos de seguridad.',
+      };
+    }
+
+    // 2. Si se proporciona contraseña actual (cambio voluntario desde perfil), reautenticar con Supabase
+    if (currentPassword) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user?.email) {
+        return {
+          success: false,
+          message: 'No hay una sesión activa para verificar la contraseña actual.',
+          error: userError?.message,
+        };
+      }
+
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (reauthError) {
+        return {
+          success: false,
+          message: 'La contraseña actual ingresada es incorrecta.',
+          error: reauthError.message,
+        };
+      }
+    }
+
+    // 3. Actualizar la contraseña en Supabase Auth
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) {
+      let friendlyMessage = updateError.message;
+      if (updateError.message?.toLowerCase().includes('should be different')) {
+        friendlyMessage = 'La nueva contraseña debe ser diferente a la anterior.';
+      } else if (updateError.message?.toLowerCase().includes('session') || updateError.message?.toLowerCase().includes('auth')) {
+        friendlyMessage = 'La sesión no es válida o ha expirado. Por favor, solicita un nuevo enlace o inicia sesión nuevamente.';
+      }
+
+      return {
+        success: false,
+        message: friendlyMessage,
+        error: updateError.message,
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Contraseña actualizada correctamente.',
+    };
   } catch (err: any) {
-    return { success: false, message: err.message || 'Error al actualizar contraseña', error: err.message };
+    return {
+      success: false,
+      message: err.message || 'Error al actualizar la contraseña.',
+      error: err.message,
+    };
   }
 }
 
-export async function verifyAndChangePassword(_currentPw: string, newPassword: string): Promise<{ success: boolean; message: string; error?: string }> {
-  return changePassword(newPassword);
+export async function verifyAndChangePassword(
+  oldPassword: string,
+  newPassword: string
+): Promise<{ success: boolean; message: string; error?: string }> {
+  return changePassword(newPassword, oldPassword);
 }

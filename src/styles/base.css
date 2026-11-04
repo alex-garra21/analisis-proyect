@@ -1,62 +1,76 @@
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
 
 :root {
-  /* MODO CLARO (Default) */
-  --bg-app: #f1f5f9;
-  --bg-card: #ffffff;
-  --bg-sidebar: #0f172a;
-  --bg-input: #ffffff;
+  /* ── SISTEMA DE DISEÑO TERRACOTA (FLAT DESIGN) ── */
+  --bg-main: #FDFBF7;
+  --bg-app: #FDFBF7;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #2C221E;
+  --bg-input: #FFFFFF;
   
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-on-sidebar: #f1f5f9;
+  --text-primary: #2C221E;
+  --text-secondary: #7C6E67;
+  --text-muted: #9E9189;
+  --text-on-sidebar: #FDFBF7;
   
-  --border-soft: #e2e8f0;
-  --border-med: #cbd5e1;
+  --border-soft: #E6DFD5;
+  --border-med: #D9D0C5;
   
-  --accent-primary: #185FA5;
-  --accent-secondary: #3b82f6;
-  --accent-light: #e6f1fb;
-  --accent-dark: #042C53;
+  --accent-primary: #C85A32;
+  --accent-hover: #B04A25;
+  --accent-secondary: #B04A25;
+  --accent-light: #F9EFEA;
+  --accent-dark: #8F3717;
 
   --bg-primary: var(--bg-card);
   --bg-secondary: var(--bg-app);
+
+  --btn-secondary-bg: #F2ECE4;
+  --btn-secondary-text: #7C6E67;
   
-  --status-pending: #f59e0b;
-  --status-success: #10b981;
-  --status-error: #ef4444;
+  --status-pending: #F59E0B;
+  --status-success: #16A34A;
+  --status-error: #DC2626;
+  --status-disabled: #E2DCD5;
   
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-sm: 0 1px 2px 0 rgba(44, 34, 30, 0.04);
+  --shadow-md: 0 2px 6px 0 rgba(44, 34, 30, 0.07);
   --radius-md: 10px;
   --radius-lg: 16px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg-app: #020617;
-    --bg-card: #0f172a;
-    --bg-sidebar: #020617;
-    --bg-input: #1e293b;
+    --bg-main: #1D1815;
+    --bg-app: #1D1815;
+    --bg-surface: #27201C;
+    --bg-card: #27201C;
+    --bg-sidebar: #171210;
+    --bg-input: #2E2521;
     
-    --text-primary: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-on-sidebar: #f8fafc;
+    --text-primary: #FDFBF7;
+    --text-secondary: #C3B8B1;
+    --text-muted: #8F827B;
+    --text-on-sidebar: #FDFBF7;
     
-    --border-soft: #1e293b;
-    --border-med: #334155;
+    --border-soft: #3E332E;
+    --border-med: #4E413B;
     
-    --accent-primary: #3b82f6;
-    --accent-light: #1e293b;
-    --accent-dark: #0c3257;
+    --accent-primary: #C85A32;
+    --accent-hover: #D9693F;
+    --accent-secondary: #D9693F;
+    --accent-light: #362822;
+    --accent-dark: #B04A25;
     
-    --bg-primary: #1e293b;
-    --bg-secondary: #020617;
+    --btn-secondary-bg: #2E2521;
+    --btn-secondary-text: #C3B8B1;
     
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --bg-primary: #27201C;
+    --bg-secondary: #1D1815;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -64,7 +78,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.1s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.1s ease;
 }
 
 html, body {
@@ -94,11 +108,10 @@ input::-ms-clear {
   display: none;
 }
 
-/* ── CUSTOM SCROLLBARS ── */
-/* Estilos para navegadores basados en Webkit (Chrome, Edge, Safari) */
+/* ── CUSTOM SCROLLBARS (FLAT TERRACOTTA) ── */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -106,27 +119,30 @@ input::-ms-clear {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-med);
-  border-radius: 100px;
-  border: 2px solid var(--bg-app);
-  transition: all 0.3s ease;
+  background: #D9D0C5;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: #C3B8B1;
 }
 
-/* Soporte para Firefox */
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-med) var(--bg-app);
+  scrollbar-color: #D9D0C5 var(--bg-app);
 }
 
-@media (prefers-color-scheme: dark) {
-  ::-webkit-scrollbar-thumb {
-    background: #334155;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
-  }
+/* ── REGLAS GLOBALES FLAT DESIGN ── */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background-color: var(--status-disabled) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-soft) !important;
+  cursor: not-allowed !important;
+  opacity: 0.8 !important;
+  box-shadow: none !important;
+  transform: none !important;
 }

@@ -12,6 +12,7 @@ interface PasswordFieldProps {
   className?: string;
   error?: boolean;
   success?: boolean;
+  showSuccess?: boolean;
   disabled?: boolean;
   autoComplete?: string;
 }
@@ -26,7 +27,8 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
   style = {},
   className = "",
   error = false,
-  success = false,
+  success,
+  showSuccess,
   disabled = false,
   autoComplete = "current-password"
 }) => {
@@ -35,6 +37,9 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
   const toggleVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // El check verde ('✓') ÚNICAMENTE se muestra si la prop es estrictamente true y el campo no está vacío
+  const isSuccess = (success === true || showSuccess === true) && Boolean(value && value.trim().length > 0);
 
   return (
     <div className={`${className}`} style={{ marginBottom: '1.5rem', ...style }}>
@@ -63,11 +68,31 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
           disabled={disabled}
           autoComplete={autoComplete}
           style={{
-            paddingRight: (success || showPassword || !showPassword) ? '45px' : '16px',
-            borderColor: success ? 'var(--accent-primary)' : error ? '#ef4444' : undefined,
+            paddingRight: isSuccess ? '68px' : '42px',
+            borderColor: isSuccess ? '#16a34a' : error ? '#ef4444' : undefined,
           }}
         />
         
+        {/* Check Verde de Éxito: Solo visible si isSuccess es estrictamente true */}
+        {isSuccess && (
+          <div
+            style={{ 
+              position: 'absolute', 
+              right: '42px', 
+              top: '50%', 
+              transform: 'translateY(-50%)', 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              pointerEvents: 'none',
+              animation: 'fadeIn 0.2s ease'
+            }}
+          >
+            <Icons.Check size={18} color="#16a34a" strokeWidth={2.5} />
+          </div>
+        )}
+
+        {/* Botón de alternar visibilidad (Ojo) */}
         <button
           type="button"
           onClick={toggleVisibility}
@@ -98,18 +123,6 @@ const PasswordField: React.FC<PasswordFieldProps> = ({
             <Icons.EyeOff key="eye-closed" size={18} />
           )}
         </button>
-
-        {success && !showPassword && (
-          <div style={{ 
-            position: 'absolute', 
-            right: '45px', 
-            top: '50%', 
-            transform: 'translateY(-50%)', 
-            display: 'flex' 
-          }}>
-            <Icons.Check size={18} color="var(--accent-primary)" strokeWidth={3} />
-          </div>
-        )}
       </div>
     </div>
   );

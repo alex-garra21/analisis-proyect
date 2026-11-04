@@ -1,14 +1,3 @@
-/**
- * Definiciones de Tipos de Datos estrictamente alineadas con el esquema oficial de Supabase:
- * - roles
- * - usuarios
- * - categorias
- * - mercaderias
- * - clientes
- * - cotizaciones
- * - detalle_cotizacion
- */
-
 export type RoleName = 'sistemas' | 'administrador' | 'colaborador';
 
 export interface Role {
@@ -21,12 +10,12 @@ export interface Role {
 export interface Usuario {
   id: string; // uuid references auth.users(id)
   nombre: string;
+  apellido?: string | null;
   correo: string;
   rol_id: number | null;
   telegram_username?: string | null;
   estado: boolean;
   created_at: string;
-  // Relación cargada por join
   roles?: {
     id: number;
     nombre: RoleName;
@@ -39,6 +28,13 @@ export interface Categoria {
   nombre: string;
   descripcion?: string | null;
   created_at: string;
+}
+
+export interface UnidadMedida {
+  id: number | string;
+  nombre: string;
+  abreviatura?: string | null;
+  created_at?: string;
 }
 
 export interface Mercaderia {
@@ -93,11 +89,9 @@ export interface DetalleCotizacion {
   cantidad: number;
   precio_aplicado: number;
   created_at: string;
-  // Relación
   mercaderias?: Mercaderia | null;
 }
 
-/** Formateador estándar de moneda en Quetzales (Q.) */
 export const formatQuetzales = (value: number | string | null | undefined): string => {
   const num = typeof value === 'string' ? parseFloat(value) : (value ?? 0);
   return `Q. ${(isNaN(num) ? 0 : num).toLocaleString('es-GT', {

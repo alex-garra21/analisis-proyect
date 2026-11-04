@@ -66,10 +66,29 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="nav" style={{ width: '100%', position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-card, #ffffff)', borderBottom: '1px solid var(--border-soft, #e2e8f0)' }}>
+      <nav className="nav" style={{ width: '100%', position: 'sticky', top: 0, zIndex: 100, background: 'var(--bg-surface, #ffffff)', borderBottom: '1px solid var(--border-soft, #E6DFD5)' }}>
         <div className="nav-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem' }}>
           {/* Lado Izquierdo: Logotipo y Enlaces (Desktop) */}
           <div className="nav-left-group" style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
+            <Link
+              to={maskPath('/')}
+              className="nav-logo"
+              style={{
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                fontWeight: 800,
+                fontSize: '1.1rem',
+                color: 'var(--accent-primary, #C85A32)',
+                letterSpacing: '-0.5px',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <span className="logo-main" style={{ color: 'var(--accent-primary, #C85A32)' }}>
+                COMERCIAL FLORES DEL CAMPO
+              </span>
+            </Link>
+
             <ul className="nav-links desktop-nav hidden md:flex" style={{ alignItems: 'center', gap: '1.5rem', listStyle: 'none', margin: 0, padding: 0 }}>
               {navLinks.map((link) => (
                 <li key={link.path}>
@@ -80,8 +99,8 @@ export default function Navbar() {
                       fontSize: '14px',
                       fontWeight: 600,
                       textDecoration: 'none',
-                      color: isActive(link.path) ? 'var(--accent-primary, #185FA5)' : 'var(--text-secondary, #64748b)',
-                      borderBottom: isActive(link.path) ? '2px solid var(--accent-primary, #185FA5)' : '2px solid transparent',
+                      color: isActive(link.path) ? 'var(--accent-primary, #C85A32)' : 'var(--text-secondary, #7C6E67)',
+                      borderBottom: isActive(link.path) ? '2px solid var(--accent-primary, #C85A32)' : '2px solid transparent',
                       paddingBottom: '4px',
                       transition: 'color 0.2s, border-color 0.2s'
                     }}

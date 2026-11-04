@@ -1,5 +1,5 @@
 import { supabase } from '../../utils/supabase';
-import type { Categoria, Mercaderia, Cliente, Cotizacion } from '../../types/database';
+import type { Categoria, Mercaderia, Cliente, Cotizacion, UnidadMedida } from '../../types/database';
 
 /**
  * QUERIES - Módulo de Mercaderías e Inventario
@@ -43,6 +43,39 @@ export async function getCategoriasQuery(): Promise<Categoria[]> {
     throw new Error(`Error al obtener categorías: ${error.message}`);
   }
   return data || [];
+}
+
+export async function getUnidadesMedidaQuery(): Promise<UnidadMedida[]> {
+  try {
+    const { data, error } = await supabase
+      .from('unidades_medida')
+      .select('*')
+      .order('nombre', { ascending: true });
+
+    if (error || !data || data.length === 0) {
+      // Fallback a unidades estándar del comercio de flores si no estuviera poblada
+      return [
+        { id: 1, nombre: 'Unidad', abreviatura: 'UND' },
+        { id: 2, nombre: 'Docena', abreviatura: 'DOC' },
+        { id: 3, nombre: 'Paquete', abreviatura: 'PQT' },
+        { id: 4, nombre: 'Caja', abreviatura: 'CAJ' },
+        { id: 5, nombre: 'Ramo', abreviatura: 'RAM' },
+        { id: 6, nombre: 'Mazo', abreviatura: 'MAZ' },
+        { id: 7, nombre: 'Libra', abreviatura: 'LBS' },
+      ];
+    }
+    return data;
+  } catch {
+    return [
+      { id: 1, nombre: 'Unidad', abreviatura: 'UND' },
+      { id: 2, nombre: 'Docena', abreviatura: 'DOC' },
+      { id: 3, nombre: 'Paquete', abreviatura: 'PQT' },
+      { id: 4, nombre: 'Caja', abreviatura: 'CAJ' },
+      { id: 5, nombre: 'Ramo', abreviatura: 'RAM' },
+      { id: 6, nombre: 'Mazo', abreviatura: 'MAZ' },
+      { id: 7, nombre: 'Libra', abreviatura: 'LBS' },
+    ];
+  }
 }
 
 /**

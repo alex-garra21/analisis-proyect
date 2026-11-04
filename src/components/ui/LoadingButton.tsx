@@ -26,7 +26,7 @@ export default function LoadingButton({
           background: 'var(--accent-primary)',
           color: 'white',
           border: 'none',
-          boxShadow: '0 4px 15px rgba(24, 95, 165, 0.2)'
+          boxShadow: 'none'
         };
       case 'secondary':
         return {

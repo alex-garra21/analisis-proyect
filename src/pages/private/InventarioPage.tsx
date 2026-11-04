@@ -1,16 +1,22 @@
 import { useState, useMemo } from 'react';
 import { useMercaderias } from '../../api/hooks/useComercial';
+import type { Mercaderia } from '../../types/database';
 import { formatQuetzales } from '../../types/database';
 import AdminTable from '../../components/ui/AdminTable';
 import SearchBar from '../../components/ui/SearchBar';
+import { Icons } from '../../components/Icons';
+import InventarioMovimientoModal from '../../modules/admin/inventario/InventarioMovimientoModal';
 
 /**
  * Gestión del Inventario de Mercaderías (Ruta Protegida):
- * Consulta directa a public.mercaderias con filtrado por stock y búsqueda por código_mercaderia o nombre.
+ * Consulta directa a public.mercaderias con filtrado por stock, cálculo automático del Total
+ * y módulo de ajustes de stock (Ingreso de Mercadería y Devolución).
  */
 export default function InventarioPage() {
   const [query, setQuery] = useState('');
   const [soloBajo, setSoloBajo] = useState(false);
+  const [selectedMercaderia, setSelectedMercaderia] = useState<Mercaderia | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: mercaderias = [], isLoading } = useMercaderias();
 
@@ -29,7 +35,10 @@ export default function InventarioPage() {
   }, [query, soloBajo, mercaderias]);
 
   const valorTotal = useMemo(() => {
-    return items.reduce((sum, m) => sum + (Number(m.precio_unitario) || 0) * (Number(m.stock_actual) || 0), 0);
+    return items.reduce(
+      (sum, m) => sum + (Number(m.precio_unitario) || 0) * (Number(m.stock_actual) || 0),
+      0
+    );
   }, [items]);
 
   const headers = [
@@ -38,6 +47,8 @@ export default function InventarioPage() {
     'Categoría',
     'Precio Unitario',
     'Stock Actual',
+    'Total',
+    'Acciones',
   ];
 
   return (
@@ -77,7 +88,7 @@ export default function InventarioPage() {
               type="checkbox"
               checked={soloBajo}
               onChange={(e) => setSoloBajo(e.target.checked)}
-              style={{ accentColor: '#185FA5', width: 16, height: 16 }}
+              style={{ accentColor: '#C85A32', width: 16, height: 16 }}
             />
             Solo stock mínimo (≤ 10)
           </label>
@@ -94,7 +105,7 @@ export default function InventarioPage() {
           }}
         >
           <span style={{ color: 'var(--text-secondary)', marginRight: '6px' }}>Valor en existencia:</span>
-          <strong style={{ color: '#185FA5', fontSize: '15px' }}>{formatQuetzales(valorTotal)}</strong>
+          <strong style={{ color: '#C85A32', fontSize: '15px' }}>{formatQuetzales(valorTotal)}</strong>
         </div>
       </div>
 
@@ -106,6 +117,7 @@ export default function InventarioPage() {
         {items.map((m) => {
           const isMinStock = m.stock_actual <= 10;
           const isOut = m.stock_actual <= 0;
+          const filaTotal = Number(m.precio_unitario || 0) * Number(m.stock_actual || 0);
 
           return (
             <tr key={m.id} id={`inv-${m.codigo_mercaderia}`}>
@@ -135,7 +147,7 @@ export default function InventarioPage() {
                   {m.categorias?.nombre || 'General'}
                 </span>
               </td>
-              <td style={{ fontWeight: 700 }}>{formatQuetzales(m.precio_unitario)}</td>
+              <td style={{ fontWeight: 600 }}>{formatQuetzales(m.precio_unitario)}</td>
               <td>
                 <span
                   style={{
@@ -154,10 +166,50 @@ export default function InventarioPage() {
                   ) : null}
                 </span>
               </td>
+              {/* Columna Total calculada automáticamente: Stock Actual * Precio Unitario */}
+              <td>
+                <strong style={{ color: '#C85A32', fontSize: '14px' }}>
+                  {formatQuetzales(filaTotal)}
+                </strong>
+              </td>
+              {/* Botón de acción Editar con opciones de Ingreso y Devolución */}
+              <td>
+                <button
+                  type="button"
+                  className="admin-btn"
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '12px',
+                    background: '#F2ECE4',
+                    color: '#2C221E',
+                    borderColor: '#E6DFD5',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => {
+                    setSelectedMercaderia(m);
+                    setIsModalOpen(true);
+                  }}
+                  title="Editar stock e inventario"
+                >
+                  <Icons.Edit size={14} />
+                  <span>Editar</span>
+                </button>
+              </td>
             </tr>
           );
         })}
       </AdminTable>
+
+      <InventarioMovimientoModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedMercaderia(null);
+        }}
+        mercaderia={selectedMercaderia}
+      />
     </div>
   );
 }

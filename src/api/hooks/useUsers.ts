@@ -1,12 +1,31 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getAllUsersQuery } from '../supabase/users/userQueries';
-import { updateUserMutation, toggleUserStatusMutation } from '../supabase/users/userMutations';
+import { getAllUsersQuery, getRolesQuery } from '../supabase/users/userQueries';
+import { updateUserMutation, toggleUserStatusMutation, createUserAdminMutation } from '../supabase/users/userMutations';
+import type { CreateUserData } from '../supabase/users/userMutations';
 
 export function useAllUsers() {
   return useQuery({
     queryKey: ['users'],
     queryFn: getAllUsersQuery,
     staleTime: 1000 * 60 * 2,
+  });
+}
+
+export function useRoles() {
+  return useQuery({
+    queryKey: ['roles'],
+    queryFn: getRolesQuery,
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useCreateUserAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateUserData) => createUserAdminMutation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
   });
 }
 

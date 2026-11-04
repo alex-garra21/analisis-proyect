@@ -138,7 +138,7 @@ export default function ResetPasswordPage() {
         right: '-80px',
         width: '360px',
         height: '360px',
-        background: 'radial-gradient(circle, rgba(24, 95, 165, .12) 0%, transparent 70%)',
+        background: 'var(--accent-light)', borderRadius: '50%', opacity: 0.4,
         pointerEvents: 'none',
         zIndex: 1
       }}></div>

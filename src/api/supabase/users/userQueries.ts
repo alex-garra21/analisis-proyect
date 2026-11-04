@@ -35,11 +35,29 @@ export async function getUserProfileQuery(userId: string): Promise<UserData | nu
   return mapUserData(userData);
 }
 
+export async function getRolesQuery(): Promise<{ id: number; nombre: string; descripcion?: string | null }[]> {
+  const { data, error } = await supabase
+    .from('roles')
+    .select('id, nombre, descripcion')
+    .order('id', { ascending: true });
+
+  if (error) {
+    console.error('Error al obtener roles:', error);
+    return [
+      { id: 1, nombre: 'sistemas', descripcion: 'Superadministrador con acceso total' },
+      { id: 2, nombre: 'administrador', descripcion: 'Gestión operativa general' },
+      { id: 3, nombre: 'colaborador', descripcion: 'Registro de cotizaciones y operaciones' },
+    ];
+  }
+  return data || [];
+}
+
 function mapUserData(raw: any): UserData {
   const roleName: UserRole = (raw.roles?.nombre || 'colaborador').toLowerCase() as UserRole;
   return {
     id: raw.id,
     nombre: raw.nombre || '',
+    apellido: raw.apellido || '',
     correo: raw.correo || '',
     rol_id: raw.rol_id,
     rol: roleName,

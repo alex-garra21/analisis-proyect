@@ -8,6 +8,7 @@ import { createMaskedUrl } from '../../utils/routerHasher';
 import AdminTable from '../../components/ui/AdminTable';
 import SearchBar from '../../components/ui/SearchBar';
 import { Icons } from '../../components/Icons';
+import MercaderiaFormModal from '../../modules/admin/catalogo/MercaderiaFormModal';
 import Swal from 'sweetalert2';
 
 /**
@@ -20,6 +21,7 @@ export default function CatalogoAdminPage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string>('Todas');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data: mercaderias = [], isLoading } = useMercaderias();
   const { data: categorias = [] } = useCategorias();
@@ -107,6 +109,23 @@ export default function CatalogoAdminPage() {
               fontWeight: 600,
             }}
           >
+            <button
+              type="button"
+              className="btn-solid"
+              onClick={() => setIsModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 600,
+              }}
+            >
+              <Icons.Plus size={16} />
+              <span>Nueva Mercadería</span>
+            </button>
+
             <span
               style={{
                 display: 'inline-flex',
@@ -114,9 +133,9 @@ export default function CatalogoAdminPage() {
                 gap: '6px',
                 padding: '5px 12px',
                 borderRadius: '8px',
-                background: 'rgba(24, 95, 165, 0.08)',
+                background: 'rgba(200, 90, 50, 0.08)',
                 border: '1px solid var(--border-soft)',
-                color: '#185FA5',
+                color: '#C85A32',
                 fontSize: '12px',
               }}
             >
@@ -150,9 +169,9 @@ export default function CatalogoAdminPage() {
                   borderRadius: 20,
                   fontSize: '12px',
                   fontWeight: isSelected ? 700 : 500,
-                  border: isSelected ? '1px solid #185FA5' : '1px solid var(--border-med)',
-                  background: isSelected ? 'rgba(24, 95, 165, 0.12)' : 'var(--bg-card)',
-                  color: isSelected ? '#185FA5' : 'var(--text-secondary)',
+                  border: isSelected ? '1px solid #C85A32' : '1px solid var(--border-med)',
+                  background: isSelected ? 'rgba(200, 90, 50, 0.12)' : 'var(--bg-card)',
+                  color: isSelected ? '#C85A32' : 'var(--text-secondary)',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   whiteSpace: 'nowrap',
@@ -209,7 +228,7 @@ export default function CatalogoAdminPage() {
                 </span>
               </td>
               <td>
-                <strong style={{ color: '#185FA5', fontSize: '15px' }}>
+                <strong style={{ color: '#C85A32', fontSize: '15px' }}>
                   {formatQuetzales(m.precio_unitario)}
                 </strong>
               </td>
@@ -261,6 +280,11 @@ export default function CatalogoAdminPage() {
           );
         })}
       </AdminTable>
+
+      <MercaderiaFormModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

@@ -160,7 +160,7 @@
 }
 
 .nav-mobile-links a.active {
-  background: rgba(24, 95, 165, 0.08);
+  background: rgba(200, 90, 50, 0.08);
   color: var(--accent-primary);
   font-weight: 700;
 }
@@ -229,8 +229,10 @@
   right: -80px;
   width: 360px;
   height: 360px;
-  background: radial-gradient(circle, rgba(24, 95, 165, .12) 0%, transparent 70%);
+  background: var(--accent-light);
+  border-radius: 50%;
   pointer-events: none;
+  opacity: 0.5;
 }
 
 .hero-inner {
@@ -345,7 +347,7 @@ h1 span {
 }
 
 .stat:hover {
-  background: rgba(24, 95, 165, 0.05);
+  background: rgba(200, 90, 50, 0.05);
 }
 
 .stat:last-child {
@@ -428,7 +430,7 @@ h1 span {
 .agenda-list-item:hover {
   border-color: var(--accent-primary);
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(24, 95, 165, 0.1);
+  box-shadow: 0 10px 30px rgba(200, 90, 50, 0.1);
 }
 
 .ag-time,
@@ -512,7 +514,7 @@ h1 span {
 .spk-card:hover {
   border-color: var(--accent-primary);
   transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(24, 95, 165, 0.12);
+  box-shadow: 0 12px 40px rgba(200, 90, 50, 0.12);
 }
 
 .avatar {
@@ -577,9 +579,9 @@ h1 span {
   margin-bottom: 10px;
 }
 
-/* ── CTA BAND ── */
+/* ── CTA BAND (FLAT DESIGN) ── */
 .cta-band {
-  background: linear-gradient(135deg, #042C53 0%, #185FA5 100%);
+  background: #2C221E;
   padding: 3.5rem 2rem;
   text-align: center;
 }
@@ -643,14 +645,13 @@ h1 span {
 }
 
 .robotics-badge {
-  background: linear-gradient(90deg, #1976d2, #64b5f6);
+  background: var(--accent-primary);
   color: white;
   padding: 8px 20px;
   border-radius: 50px;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
   display: inline-block;
   margin-bottom: 2rem;
   text-transform: uppercase;
@@ -735,10 +736,10 @@ h1 span {
   top: 0;
   left: 0;
   right: 0;
-  height: 6px;
-  background: linear-gradient(90deg, var(--accent-primary), #6366f1);
+  height: 4px;
+  background: var(--accent-primary);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.2s;
 }
 
 .robotics-rule-card:hover {

@@ -7,7 +7,6 @@ import { encodeId, decodeId } from '../utils/routerHasher';
 const STATIC_SEGMENTS = [
   // Públicas
   'catalogo',
-  'cotizaciones',
   'reset-password',
   'cuenta-desactivada',
 
@@ -18,6 +17,8 @@ const STATIC_SEGMENTS = [
   'catalogo-admin',
   'inventario',
   'bandeja-cotizaciones',
+  'categorias',
+  'clientes',
   'usuarios',
 ] as const;
 
@@ -60,7 +61,6 @@ export function isPlainKnownPath(path: string): boolean {
 export const ROUTES = {
   home: '/',
   catalogo: maskPath('/catalogo'),
-  cotizaciones: maskPath('/cotizaciones'),
   resetPassword: maskPath('/reset-password'),
   cuentaDesactivada: maskPath('/cuenta-desactivada'),
   dashboard: maskPath('/dashboard'),

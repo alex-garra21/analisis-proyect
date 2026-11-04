@@ -9,8 +9,6 @@ import Layout from './components/Layout';
 const Home = lazy(() => import('./pages/public/Home'));
 const CatalogoPage = lazy(() => import('./pages/public/CatalogoPage'));
 const ProductoDetallePage = lazy(() => import('./pages/public/ProductoDetallePage'));
-const CotizacionesPage = lazy(() => import('./pages/public/CotizacionesPage'));
-const CotizacionDetallePage = lazy(() => import('./pages/public/CotizacionDetallePage'));
 const ResetPasswordPage = lazy(() => import('./pages/public/ResetPasswordPage'));
 const DeactivatedPage = lazy(() => import('./pages/public/DeactivatedPage'));
 
@@ -21,6 +19,8 @@ const ProfileModule = lazy(() => import('./modules/general/perfil/ProfileModule'
 const CatalogoAdminPage = lazy(() => import('./pages/private/CatalogoAdminPage'));
 const InventarioPage = lazy(() => import('./pages/private/InventarioPage'));
 const BandejaCotizacionesPage = lazy(() => import('./pages/private/BandejaCotizacionesPage'));
+const CategoriasModule = lazy(() => import('./modules/admin/categorias/CategoriasModule'));
+const ClientesModule = lazy(() => import('./modules/admin/clientes/ClientesModule'));
 const UsersModule = lazy(() => import('./modules/admin/usuarios/UsersModule'));
 
 import { DashboardTitleProvider } from './utils/DashboardTitleContext';
@@ -115,8 +115,6 @@ function App() {
             <Route index element={<Home />} />
             <Route path={seg('catalogo')} element={<CatalogoPage />} />
             <Route path={`${seg('catalogo')}/:maskedId`} element={<ProductoDetallePage />} />
-            <Route path={seg('cotizaciones')} element={<CotizacionesPage />} />
-            <Route path={`${seg('cotizaciones')}/:maskedId`} element={<CotizacionDetallePage />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 
@@ -138,6 +136,8 @@ function App() {
             <Route path={seg('catalogo-admin')} element={<CatalogoAdminPage />} />
             <Route path={seg('inventario')} element={<InventarioPage />} />
             <Route path={seg('bandeja-cotizaciones')} element={<BandejaCotizacionesPage />} />
+            <Route path={seg('categorias')} element={<CategoriasModule />} />
+            <Route path={seg('clientes')} element={<ClientesModule />} />
             <Route path={seg('usuarios')} element={<UsersModule />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>

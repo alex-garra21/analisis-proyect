@@ -11,15 +11,15 @@ export default function ProfileModule() {
   const { user, refetchProfile } = useAuth();
   const updateUserMutation = useUpdateUser();
 
-  const [nombre, setNombre] = useState('');
-  const [telegramUsername, setTelegramUsername] = useState('');
+  const [nombres, setNombres] = useState('');
+  const [apellidos, setApellidos] = useState('');
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setNombre(user.nombre || '');
-      setTelegramUsername(user.telegram_username || '');
+      setNombres(user.nombre || '');
+      setApellidos(user.apellido || '');
     }
   }, [user]);
 
@@ -27,13 +27,18 @@ export default function ProfileModule() {
     e.preventDefault();
     if (!user?.id) return;
 
+    if (!nombres.trim() || !apellidos.trim()) {
+      showToast('Por favor ingresa tanto tus nombres como tus apellidos', 'warning');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await updateUserMutation.mutateAsync({
         userId: user.id,
         data: {
-          nombre: nombre.trim(),
-          telegram_username: telegramUsername.trim() || null,
+          nombre: nombres.trim(),
+          apellido: apellidos.trim(),
         },
       });
       await refetchProfile();
@@ -63,16 +68,30 @@ export default function ProfileModule() {
           gap: '1.5rem',
         }}
       >
-        <FormField label="Nombre Completo">
-          <input
-            type="text"
-            className="dashboard-input"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            required
-            placeholder="Tu nombre y apellido"
-          />
-        </FormField>
+        {/* Campos separados para Nombres y Apellidos que mapean directamente a public.usuarios */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+          <FormField label="Nombres">
+            <input
+              type="text"
+              className="dashboard-input"
+              value={nombres}
+              onChange={(e) => setNombres(e.target.value)}
+              required
+              placeholder="Ej. Steven Alexander"
+            />
+          </FormField>
+
+          <FormField label="Apellidos">
+            <input
+              type="text"
+              className="dashboard-input"
+              value={apellidos}
+              onChange={(e) => setApellidos(e.target.value)}
+              required
+              placeholder="Ej. Reyes"
+            />
+          </FormField>
+        </div>
 
         <FormField label="Correo Electrónico (Asociado a Supabase Auth)">
           <input
@@ -81,6 +100,7 @@ export default function ProfileModule() {
             value={user?.correo || ''}
             disabled
             readOnly
+            style={{ backgroundColor: 'var(--bg-app)', cursor: 'not-allowed' }}
           />
         </FormField>
 
@@ -91,36 +111,8 @@ export default function ProfileModule() {
             value={user?.rolNombre || user?.rol || 'Colaborador'}
             disabled
             readOnly
-            style={{ textTransform: 'capitalize', fontWeight: 700 }}
+            style={{ textTransform: 'capitalize', fontWeight: 700, backgroundColor: 'var(--bg-app)', cursor: 'not-allowed' }}
           />
-        </FormField>
-
-        <FormField label="Usuario de Telegram (para integración de bot y cotizaciones)">
-          <div style={{ position: 'relative' }}>
-            <span
-              style={{
-                position: 'absolute',
-                left: '12px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-muted)',
-                fontWeight: 700,
-              }}
-            >
-              @
-            </span>
-            <input
-              type="text"
-              className="dashboard-input"
-              style={{ paddingLeft: '28px' }}
-              value={telegramUsername}
-              onChange={(e) => setTelegramUsername(e.target.value.replace(/^@/, ''))}
-              placeholder="usuario_telegram"
-            />
-          </div>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-            Utilizado para canalizar cotizaciones y notificaciones automáticas por Telegram.
-          </span>
         </FormField>
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-soft)' }}>

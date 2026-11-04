@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useAllUsers, useToggleUserStatus } from '../../../api/hooks/useUsers';
 import { useAuth } from '../../../api/hooks/useAuth';
+import type { UserData } from '../../../utils/auth';
 import ModuleTitle from '../../../components/ModuleTitle';
 import { showToast, showConfirm } from '../../../utils/swal';
 import SearchBar from '../../../components/ui/SearchBar';
 import AdminBadge from '../../../components/ui/AdminBadge';
 import AdminTable from '../../../components/ui/AdminTable';
+import AutocompleteSelect from '../../../components/ui/AutocompleteSelect';
 import { Icons } from '../../../components/Icons';
+import UserFormModal from './UserFormModal';
 
 export default function UsersModule() {
   const { data: users = [], isLoading } = useAllUsers();
@@ -15,12 +18,18 @@ export default function UsersModule() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+
+  const isSistemasOrAdmin =
+    currentUser?.rol === 'sistemas' || currentUser?.rol === 'administrador';
 
   const filteredUsers = users.filter((u) => {
     const q = searchTerm.toLowerCase();
+    const fullName = [u.nombre, u.apellido].filter(Boolean).join(' ').toLowerCase();
     const matchesSearch =
-      u.nombre.toLowerCase().includes(q) ||
-      u.correo.toLowerCase().includes(q) ||
+      fullName.includes(q) ||
+      (u.correo && u.correo.toLowerCase().includes(q)) ||
       (u.telegram_username && u.telegram_username.toLowerCase().includes(q));
 
     const matchesRole = roleFilter === 'all' || u.rol === roleFilter;
@@ -45,11 +54,24 @@ export default function UsersModule() {
           userId: targetUser.id,
           estado: !targetUser.estado,
         });
-        showToast(`Usuario ${targetUser.estado ? 'desactivado' : 'activado'} correctamente`, 'success');
+        showToast(
+          `Usuario ${targetUser.estado ? 'desactivado' : 'activado'} correctamente`,
+          'success'
+        );
       } catch (err: any) {
         showToast(`Error: ${err.message}`, 'error');
       }
     }
+  };
+
+  const handleOpenCreateModal = () => {
+    setSelectedUser(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (u: UserData) => {
+    setSelectedUser(u);
+    setIsModalOpen(true);
   };
 
   const headers = [
@@ -63,7 +85,38 @@ export default function UsersModule() {
 
   return (
     <div className="users-module">
-      <ModuleTitle title="Gestión de Usuarios y Roles (Supabase)" />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          marginBottom: '1rem',
+        }}
+      >
+        <ModuleTitle title="Gestión de Usuarios y Roles (Supabase)" />
+
+        {isSistemasOrAdmin && (
+          <button
+            type="button"
+            className="btn-solid"
+            onClick={handleOpenCreateModal}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 18px',
+              fontSize: '14px',
+              fontWeight: 600,
+              boxShadow: 'none',
+            }}
+          >
+            <Icons.Plus size={16} />
+            <span>Nuevo Usuario</span>
+          </button>
+        )}
+      </div>
 
       <div
         style={{
@@ -83,17 +136,17 @@ export default function UsersModule() {
             style={{ maxWidth: '360px' }}
           />
 
-          <select
+          <AutocompleteSelect
+            options={[
+              { value: 'all', label: 'Todos los roles' },
+              { value: 'sistemas', label: 'Sistemas' },
+              { value: 'administrador', label: 'Administrador' },
+              { value: 'colaborador', label: 'Colaborador' },
+            ]}
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="dashboard-input"
-            style={{ maxWidth: '200px' }}
-          >
-            <option value="all">Todos los roles</option>
-            <option value="sistemas">Sistemas</option>
-            <option value="administrador">Administrador</option>
-            <option value="colaborador">Colaborador</option>
-          </select>
+            onChange={(val) => setRoleFilter(val)}
+            style={{ width: '180px' }}
+          />
         </div>
 
         <div style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
@@ -109,7 +162,9 @@ export default function UsersModule() {
         {filteredUsers.map((u) => (
           <tr key={u.id}>
             <td>
-              <strong style={{ color: 'var(--text-primary)' }}>{u.nombre || '—'}</strong>
+              <strong style={{ color: 'var(--text-primary)' }}>
+                {[u.nombre, u.apellido].filter(Boolean).join(' ') || '—'}
+              </strong>
             </td>
             <td style={{ color: 'var(--text-secondary)' }}>{u.correo}</td>
             <td>
@@ -124,13 +179,13 @@ export default function UsersModule() {
                     u.rol === 'sistemas'
                       ? 'rgba(99, 102, 241, 0.15)'
                       : u.rol === 'administrador'
-                      ? 'rgba(24, 95, 165, 0.12)'
+                      ? 'rgba(200, 90, 50, 0.12)'
                       : 'rgba(16, 185, 129, 0.12)',
                   color:
                     u.rol === 'sistemas'
                       ? '#4f46e5'
                       : u.rol === 'administrador'
-                      ? '#185FA5'
+                      ? '#C85A32'
                       : '#10b981',
                 }}
               >
@@ -139,7 +194,7 @@ export default function UsersModule() {
             </td>
             <td>
               {u.telegram_username ? (
-                <span style={{ color: '#0088cc', fontWeight: 600 }}>
+                <span style={{ color: '#C85A32', fontWeight: 600 }}>
                   @{u.telegram_username}
                 </span>
               ) : (
@@ -152,19 +207,48 @@ export default function UsersModule() {
               </AdminBadge>
             </td>
             <td>
-              <button
-                type="button"
-                className={`admin-btn ${u.estado ? 'admin-btn-danger' : 'admin-btn-success'}`}
-                style={{ padding: '6px 12px', fontSize: '12px' }}
-                onClick={() => handleToggleEstado(u)}
-              >
-                <Icons.Power size={14} />
-                <span>{u.estado ? 'Desactivar' : 'Activar'}</span>
-              </button>
+              <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
+                {isSistemasOrAdmin && (
+                  <button
+                    type="button"
+                    className="admin-btn"
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      background: '#F2ECE4',
+                      color: '#2C221E',
+                      borderColor: '#E6DFD5',
+                    }}
+                    onClick={() => handleOpenEditModal(u)}
+                    title="Editar usuario"
+                  >
+                    <Icons.Edit size={14} />
+                    <span>Editar</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={`admin-btn ${u.estado ? 'admin-btn-danger' : 'admin-btn-success'}`}
+                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                  onClick={() => handleToggleEstado(u)}
+                >
+                  <Icons.Power size={14} />
+                  <span>{u.estado ? 'Desactivar' : 'Activar'}</span>
+                </button>
+              </div>
             </td>
           </tr>
         ))}
       </AdminTable>
+
+      <UserFormModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedUser(null);
+        }}
+        userToEdit={selectedUser}
+      />
     </div>
   );
 }

@@ -25,7 +25,7 @@ export default function DashboardLayout() {
     if (!isLoading && user) {
       const path = plainPath(location.pathname);
       const isSistemasPath = path.includes('/usuarios');
-      const isAdminPath = path.includes('/inventario');
+      const isAdminPath = path.includes('/inventario') || path.includes('/categorias');
 
       const isSistemasUser = user.rol === 'sistemas' || user.correo === 'salexanderr2@gmail.com';
       const isAdminUser = user.rol === 'administrador';
@@ -36,7 +36,7 @@ export default function DashboardLayout() {
         return;
       }
 
-      // Acceso a /inventario solo para 'sistemas' y 'administrador'
+      // Acceso a /inventario y /categorias solo para 'sistemas' y 'administrador'
       if (isAdminPath && !isSistemasUser && !isAdminUser) {
         navigate(maskPath('/dashboard/inicio'));
         return;
@@ -78,13 +78,27 @@ export default function DashboardLayout() {
     ? 'ADMINISTRADOR'
     : 'COLABORADOR';
 
+  const logicalPath = plainPath(location.pathname);
+  const ROUTE_TITLES: Record<string, string> = {
+    '/dashboard': 'Inicio',
+    '/dashboard/inicio': 'Inicio',
+    '/dashboard/perfil': 'Mi Perfil',
+    '/dashboard/catalogo-admin': 'Catálogo de Mercaderías',
+    '/dashboard/bandeja-cotizaciones': 'Bandeja de Cotizaciones',
+    '/dashboard/inventario': 'Gestión de Inventario',
+    '/dashboard/categorias': 'Gestión de Categorías',
+    '/dashboard/clientes': 'Gestión de Clientes',
+    '/dashboard/usuarios': 'Gestión de Usuarios y Roles',
+  };
+  const activeTitle = ROUTE_TITLES[logicalPath] || title;
+
   return (
     <div className="dashboard-layout">
       <Sidebar />
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div className="header-left">
-            <h1 className="module-title">{title}</h1>
+            <h1 className="module-title">{activeTitle}</h1>
           </div>
           <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <AdminBadge variant={user.rol === 'sistemas' ? 'info' : user.rol === 'administrador' ? 'success' : 'neutral'} dot>

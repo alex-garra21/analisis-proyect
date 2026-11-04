@@ -1,11 +1,77 @@
-import { supabase } from '../../../utils/supabase';
+import { supabase, createIsolatedAuthClient } from '../../../utils/supabase';
 
 /**
  * MUTATIONS - Gestión de usuarios según esquema oficial
  */
 
+export interface CreateUserData {
+  nombres: string;
+  apellidos: string;
+  correo: string;
+  passwordTemporal: string;
+  rol_id: number;
+  telegram_username?: string | null;
+}
+
+export async function createUserAdminMutation(data: CreateUserData): Promise<{ success: boolean; error?: string }> {
+  try {
+    const cleanNombre = data.nombres.trim();
+    const cleanApellido = data.apellidos.trim();
+    const fullName = `${cleanNombre} ${cleanApellido}`;
+    const cleanEmail = data.correo.trim().toLowerCase();
+    const cleanTelegram = data.telegram_username ? data.telegram_username.replace(/^@/, '').trim() : null;
+
+    // 1. Usar cliente aislado para registrar credenciales en auth.users sin desloguear al admin
+    const isolatedClient = createIsolatedAuthClient();
+    const { data: authData, error: authError } = await isolatedClient.auth.signUp({
+      email: cleanEmail,
+      password: data.passwordTemporal,
+      options: {
+        data: {
+          nombre: cleanNombre,
+          apellido: cleanApellido,
+          full_name: fullName,
+          rol_id: data.rol_id,
+          telegram_username: cleanTelegram,
+        }
+      }
+    });
+
+    if (authError) {
+      return { success: false, error: authError.message };
+    }
+
+    if (!authData.user?.id) {
+      return { success: false, error: 'No se pudo obtener el identificador del usuario creado.' };
+    }
+
+    // 2. Registrar en la tabla pública usuarios vinculando el rol_id, correo, nombre y apellido
+    const { error: dbError } = await supabase
+      .from('usuarios')
+      .upsert({
+        id: authData.user.id,
+        nombre: cleanNombre,
+        apellido: cleanApellido,
+        correo: cleanEmail,
+        rol_id: data.rol_id,
+        telegram_username: cleanTelegram || null,
+        estado: true,
+      }, { onConflict: 'id' });
+
+    if (dbError) {
+      console.error('Error insertando en public.usuarios:', dbError);
+      return { success: false, error: `Auth creado pero falló BD: ${dbError.message}` };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Error inesperado al crear usuario' };
+  }
+}
+
 export async function updateUserMutation(userId: string, data: {
   nombre?: string;
+  apellido?: string | null;
   rol_id?: number | null;
   telegram_username?: string | null;
   estado?: boolean;
