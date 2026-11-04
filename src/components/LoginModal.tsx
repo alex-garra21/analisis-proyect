@@ -12,10 +12,9 @@ import { loginUser } from '../utils/auth';
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSwitchToRegister?: () => void;
 }
 
-export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [isForgotOpen, setIsForgotOpen] = useState(false);
@@ -98,28 +97,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
               Ingresar al Sistema
             </LoadingButton>
           </div>
-
-          {onSwitchToRegister && (
-            <div style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-              ¿Aún no tienes cuenta?{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  handleClose();
-                  onSwitchToRegister();
-                }}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#C85A32',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Regístrate aquí
-              </button>
-            </div>
-          )}
         </form>
       </Modal>
 

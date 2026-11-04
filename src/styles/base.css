@@ -146,3 +146,19 @@ textarea:disabled {
   box-shadow: none !important;
   transform: none !important;
 }
+
+/* Responsive Utility Classes (Tailwind-compatible breakpoints: 768px) */
+.hidden { display: none !important; }
+.flex { display: flex !important; }
+
+@media (min-width: 768px) {
+  .md\:flex { display: flex !important; }
+  .md\:hidden { display: none !important; }
+  .md\:block { display: block !important; }
+}
+
+@media (max-width: 767.98px) {
+  .max-md\:hidden { display: none !important; }
+  .max-md\:flex { display: flex !important; }
+  .max-md\:block { display: block !important; }
+}

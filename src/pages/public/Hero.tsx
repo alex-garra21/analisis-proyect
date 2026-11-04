@@ -13,11 +13,7 @@ export default function Hero() {
 
         {/* Lado Derecho: Texto */}
         <div style={{ flex: '1.2 1 400px', position: 'relative', zIndex: 2 }}>
-          <div className="hero-badge" 
-            onClick={() => window.dispatchEvent(new Event('openRegisterModal'))}
-            style={{ cursor: 'pointer' }}
-          >
-          </div>      {/* Contenedor vertical principal para el texto */}
+          {/* Contenedor vertical principal para el texto */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
 
             {/* Fila 1: Logo y Título Principal */}
@@ -30,7 +26,6 @@ export default function Hero() {
             <p className="hero-sub" style={{ margin: 0, maxWidth: '600px' }}>
               Insumos escolares para los programas de apoyo del MINEDUC, valija didáctica, utiles escolares, alimentación escolar, remozamiento.
             </p>
-
 
             <div className="hero-ctas">
               <button 

@@ -2,26 +2,15 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../api/hooks/useAuth';
 import LoginModal from './LoginModal';
-import RegisterModal from './RegisterModal';
 import { Icons } from './Icons';
 import { maskPath, plainPath } from '../routes/routeMap';
 
 export default function Navbar() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-
-  useEffect(() => {
-    const handleOpenRegister = () => {
-      setIsLoginOpen(false);
-      setIsRegisterOpen(true);
-    };
-    window.addEventListener('openRegisterModal', handleOpenRegister);
-    return () => window.removeEventListener('openRegisterModal', handleOpenRegister);
-  }, []);
 
   // Cierra el menú móvil al navegar
   useEffect(() => {
@@ -32,28 +21,13 @@ export default function Navbar() {
     if (isAuthenticated && user) {
       navigate(maskPath('/dashboard/inicio'));
     } else {
-      setIsRegisterOpen(false);
       setIsLoginOpen(true);
-    }
-  };
-
-  const handleRegisterClick = () => {
-    if (isAuthenticated && user) {
-      navigate(maskPath('/dashboard/perfil'));
-    } else {
-      setIsLoginOpen(false);
-      setIsRegisterOpen(true);
     }
   };
 
   const handleMobileLogin = () => {
     setIsMobileMenuOpen(false);
     handleLoginClick();
-  };
-
-  const handleMobileRegister = () => {
-    setIsMobileMenuOpen(false);
-    handleRegisterClick();
   };
 
   const current = plainPath(location.pathname);
@@ -115,41 +89,21 @@ export default function Navbar() {
           {/* Lado Derecho: Botones de Acción (Desktop) */}
           <div className="nav-right desktop-nav hidden md:flex" style={{ alignItems: 'center', gap: '0.75rem', marginLeft: 'auto' }}>
             {isAuthenticated ? (
-              <>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={handleLoginClick}
-                >
-                  Ir al Dashboard
-                </button>
-                <button
-                  type="button"
-                  className="btn-solid"
-                  onClick={handleRegisterClick}
-                >
-                  Mi Cuenta
-                </button>
-              </>
+              <button
+                type="button"
+                className="btn-solid"
+                onClick={handleLoginClick}
+              >
+                Ir al Dashboard
+              </button>
             ) : (
-              <>
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  onClick={handleLoginClick}
-                >
-                  Iniciar sesión
-                </button>
-                <button
-                  type="button"
-                  className="btn-solid"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  onClick={handleRegisterClick}
-                >
-                  <Icons.Telegram size={16} />
-                  <span>Cotiza por Telegram</span>
-                </button>
-              </>
+              <button
+                type="button"
+                className="btn-solid"
+                onClick={handleLoginClick}
+              >
+                Iniciar sesión
+              </button>
             )}
           </div>
 
@@ -183,70 +137,34 @@ export default function Navbar() {
 
             <div className="nav-mobile-actions">
               {isAuthenticated ? (
-                <>
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={handleMobileLogin}
-                  >
-                    Ir al Dashboard
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-solid"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={handleMobileRegister}
-                  >
-                    Mi Cuenta
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={handleMobileLogin}
+                >
+                  Ir al Dashboard
+                </button>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={handleMobileLogin}
-                  >
-                    Iniciar sesión
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-solid"
-                    style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-                    onClick={handleMobileRegister}
-                  >
-                    <Icons.Telegram size={16} />
-                    <span>Cotiza por Telegram</span>
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={handleMobileLogin}
+                >
+                  Iniciar sesión
+                </button>
               )}
             </div>
           </div>
         )}
       </nav>
 
-      {/* Modales de Autenticación */}
+      {/* Modal de Autenticación */}
       {isLoginOpen && (
         <LoginModal
           isOpen={isLoginOpen}
           onClose={() => setIsLoginOpen(false)}
-          onSwitchToRegister={() => {
-            setIsLoginOpen(false);
-            setIsRegisterOpen(true);
-          }}
-        />
-      )}
-
-      {isRegisterOpen && (
-        <RegisterModal
-          isOpen={isRegisterOpen}
-          onClose={() => setIsRegisterOpen(false)}
-          onSwitchToLogin={() => {
-            setIsRegisterOpen(false);
-            setIsLoginOpen(true);
-          }}
         />
       )}
     </>
