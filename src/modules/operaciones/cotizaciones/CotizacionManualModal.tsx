@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../../../components/ui/Modal';
 import FormField from '../../../components/ui/FormField';
 import AutocompleteSelect from '../../../components/ui/AutocompleteSelect';
@@ -20,6 +20,7 @@ interface ItemRow {
   cantidad: number;
   precio_aplicado: number;
   subtotal: number;
+  stock_disponible: number;
 }
 
 export default function CotizacionManualModal({ isOpen, onClose }: CotizacionManualModalProps) {
@@ -46,12 +47,39 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
   const [items, setItems] = useState<ItemRow[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Función para resetear completamente el estado del modal
+  const resetForm = useCallback(() => {
+    setIsNuevoCliente(false);
+    setSelectedClienteId('');
+    setNuevoNombreInstitucion('');
+    setNuevoContacto('');
+    setNuevoTelefono('');
+    setNuevoNit('');
+    setNuevaDireccion('');
+    setSelectedMercaderiaId('');
+    setItemCantidad('1');
+    setItemPrecio('');
+    setItems([]);
+    setIsSubmitting(false);
+  }, []);
+
+  // Resetear el estado cada vez que se abre o cierra el modal
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen, resetForm]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   // Al seleccionar un producto en el dropdown, prellenar su precio unitario automáticamente
   const handleSelectMercaderia = (idStr: string) => {
     setSelectedMercaderiaId(idStr);
     const found = mercaderias.find((m) => String(m.id) === String(idStr));
     if (found) {
-      // Formatear el precio unitario oficial con dos decimales o valor limpio
       const precioNum = Number(found.precio_unitario) || 0;
       setItemPrecio(precioNum.toFixed(2));
     } else {
@@ -75,6 +103,12 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
       return;
     }
 
+    const stockActual = Number(mercaderia.stock_actual) || 0;
+    if (stockActual <= 0) {
+      showToast(`El producto "${mercaderia.nombre}" está agotado en inventario.`, 'error');
+      return;
+    }
+
     const prec = parseFloat(itemPrecio);
     if (isNaN(prec) || prec < 0) {
       showToast('El precio aplicado debe ser válido.', 'warning');
@@ -86,11 +120,27 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
     if (existingIndex >= 0) {
       const updated = [...items];
       const newCant = updated[existingIndex].cantidad + cant;
+
+      if (newCant > stockActual) {
+        showToast(
+          `La cantidad total acumulada (${newCant}) supera el stock disponible en inventario (${stockActual}).`,
+          'warning'
+        );
+      }
+
       updated[existingIndex].cantidad = newCant;
       updated[existingIndex].precio_aplicado = prec;
       updated[existingIndex].subtotal = newCant * prec;
+      updated[existingIndex].stock_disponible = stockActual;
       setItems(updated);
     } else {
+      if (cant > stockActual) {
+        showToast(
+          `La cantidad solicitada (${cant}) supera el stock disponible en almacén (${stockActual}). Por favor ajusta la cantidad antes de crear la cotización.`,
+          'warning'
+        );
+      }
+
       setItems([
         ...items,
         {
@@ -100,6 +150,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
           cantidad: cant,
           precio_aplicado: prec,
           subtotal: cant * prec,
+          stock_disponible: stockActual,
         },
       ]);
     }
@@ -110,17 +161,47 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
     setItemPrecio('');
   };
 
+  // Modificar cantidad directamente en la tabla con validación reactiva en tiempo real
+  const handleUpdateItemQuantity = (index: number, newCantVal: string) => {
+    const cant = parseInt(newCantVal, 10);
+    const updated = [...items];
+    const target = updated[index];
+    if (!target) return;
+
+    if (isNaN(cant) || cant < 1) {
+      target.cantidad = 1;
+      target.subtotal = 1 * target.precio_aplicado;
+    } else {
+      target.cantidad = cant;
+      target.subtotal = cant * target.precio_aplicado;
+    }
+    setItems(updated);
+  };
+
   const handleRemoveItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
   const totalQuetzales = items.reduce((sum, it) => sum + it.subtotal, 0);
 
+  // Verificación dinámica de si algún ítem supera el stock disponible
+  const itemExcedido = items.find((it) => it.cantidad > it.stock_disponible);
+  const hayStockInsuficiente = Boolean(itemExcedido);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (items.length === 0) {
       showToast('Debes agregar al menos un insumo a la cotización.', 'warning');
+      return;
+    }
+
+    // Validación estricta y reactiva de stock
+    if (hayStockInsuficiente && itemExcedido) {
+      showToast(
+        `El insumo "${itemExcedido.nombre}" excede el stock disponible (${itemExcedido.cantidad} solicitados vs ${itemExcedido.stock_disponible} en inventario). Ajusta la cantidad antes de continuar.`,
+        'error'
+      );
       return;
     }
 
@@ -136,37 +217,31 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
 
     setIsSubmitting(true);
     try {
+      // Serializar explícitamente el payload como primitivos escalares JSON planos
+      const serializedItems = items.map((it) => ({
+        mercaderia_id: Number(it.mercaderia_id),
+        cantidad: Number(it.cantidad),
+        precio_aplicado: Number(Number(it.precio_aplicado).toFixed(2)),
+      }));
+
       await createCotizacionMutation.mutateAsync({
-        cliente_id: isNuevoCliente ? undefined : Number(selectedClienteId),
+        cliente_id: isNuevoCliente ? null : Number(selectedClienteId),
         nuevo_cliente: isNuevoCliente
           ? {
-              nombre_institucion: nuevoNombreInstitucion.trim(),
-              contacto_persona: nuevoContacto.trim() || null,
-              telefono: nuevoTelefono.trim() || null,
-              nit: nuevoNit.trim() || null,
-              direccion: nuevaDireccion.trim() || null,
+              nombre_institucion: String(nuevoNombreInstitucion.trim()),
+              contacto_persona: nuevoContacto.trim() ? String(nuevoContacto.trim()) : null,
+              telefono: nuevoTelefono.trim() ? String(nuevoTelefono.trim()) : null,
+              nit: nuevoNit.trim() ? String(nuevoNit.trim()) : null,
+              direccion: nuevaDireccion.trim() ? String(nuevaDireccion.trim()) : null,
             }
           : undefined,
-        colaborador_id: user?.id || null,
+        colaborador_id: user?.id ? String(user.id) : null,
         canal_origen: 'web',
-        items: items.map((it) => ({
-          mercaderia_id: it.mercaderia_id,
-          cantidad: it.cantidad,
-          precio_aplicado: it.precio_aplicado,
-        })),
+        items: serializedItems,
       });
 
       showToast('Cotización registrada exitosamente.', 'success');
-      // Reset
-      setItems([]);
-      setSelectedClienteId('');
-      setIsNuevoCliente(false);
-      setNuevoNombreInstitucion('');
-      setNuevoContacto('');
-      setNuevoTelefono('');
-      setNuevoNit('');
-      setNuevaDireccion('');
-      onClose();
+      handleClose();
     } catch (err: any) {
       showToast(`Error: ${err.message}`, 'error');
     } finally {
@@ -177,7 +252,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Crear Nueva Cotización Manual"
       maxWidth="840px"
       padding="2rem 2.25rem"
@@ -249,51 +324,51 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
                   className="dashboard-input"
                   value={nuevoNombreInstitucion}
                   onChange={(e) => setNuevoNombreInstitucion(e.target.value)}
-                  placeholder="Ej. Escuela Oficial No. 44 o Flores de Oriente"
+                  placeholder="Ej. Escuela Oficial Rural Mixta San José"
                   required={isNuevoCliente}
                 />
               </FormField>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <FormField label="Persona de Contacto">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <FormField label="Persona de Contacto (Opcional)">
                   <input
                     type="text"
                     className="dashboard-input"
                     value={nuevoContacto}
                     onChange={(e) => setNuevoContacto(e.target.value)}
-                    placeholder="Ej. Lic. Carlos Méndez"
+                    placeholder="Ej. Prof. Juan Pérez"
                   />
                 </FormField>
 
-                <FormField label="Teléfono">
+                <FormField label="Teléfono de Contacto (Opcional)">
                   <input
-                    type="text"
+                    type="tel"
                     className="dashboard-input"
                     value={nuevoTelefono}
                     onChange={(e) => setNuevoTelefono(e.target.value)}
-                    placeholder="Ej. +502 5555-4321"
+                    placeholder="Ej. 5555-1234"
                   />
                 </FormField>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                 <FormField label="NIT (Opcional)">
                   <input
                     type="text"
                     className="dashboard-input"
                     value={nuevoNit}
                     onChange={(e) => setNuevoNit(e.target.value)}
-                    placeholder="Ej. 1234567-8"
+                    placeholder="Ej. 1234567-8 o C/F"
                   />
                 </FormField>
 
-                <FormField label="Dirección de Entrega">
+                <FormField label="Dirección de Entrega (Opcional)">
                   <input
                     type="text"
                     className="dashboard-input"
                     value={nuevaDireccion}
                     onChange={(e) => setNuevaDireccion(e.target.value)}
-                    placeholder="Ej. Zona 10, Ciudad de Guatemala"
+                    placeholder="Ej. Cantón Central, San Pedro Sacatepéquez"
                   />
                 </FormField>
               </div>
@@ -315,7 +390,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
               2. Insumos y Mercaderías a Cotizar
             </h4>
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              El precio oficial del inventario se carga automáticamente al seleccionar el insumo.
+              El precio oficial se bloquea automáticamente al seleccionar el insumo.
             </span>
           </div>
 
@@ -333,14 +408,14 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
               boxShadow: 'var(--shadow-sm)',
             }}
           >
-            {/* Campo Mercadería: Mayor ancho disponible */}
+            {/* Campo Mercadería */}
             <div style={{ minWidth: '260px' }}>
               <FormField label="Mercadería / Insumo">
                 <AutocompleteSelect
                   options={mercaderias.map((m) => ({
                     value: String(m.id),
                     label: `${m.codigo_mercaderia} — ${m.nombre}`,
-                    sublabel: `Stock: ${m.stock_actual} | Precio sugerido: Q. ${Number(m.precio_unitario).toFixed(2)}`,
+                    sublabel: `Stock: ${m.stock_actual} | Precio unitario: Q. ${Number(m.precio_unitario).toFixed(2)}`,
                   }))}
                   value={selectedMercaderiaId}
                   onChange={(val) => handleSelectMercaderia(val)}
@@ -370,7 +445,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
                 />
               </FormField>
 
-              <FormField label="Precio Unitario (Q.)">
+              <FormField label="Precio (Q.)">
                 <div style={{ position: 'relative' }}>
                   <span
                     style={{
@@ -428,7 +503,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
             </div>
           </div>
 
-          {/* Tabla Limpia de Items Agregados */}
+          {/* Tabla de Items Agregados */}
           {items.length > 0 ? (
             <div style={{ marginTop: '1.25rem', overflowX: 'auto' }}>
               <table
@@ -446,6 +521,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
                   <tr style={{ background: '#F2ECE4', color: '#2C221E', textAlign: 'left', borderBottom: '1px solid var(--border-soft)' }}>
                     <th style={{ padding: '10px 14px', fontWeight: 700 }}>Código</th>
                     <th style={{ padding: '10px 14px', fontWeight: 700 }}>Descripción del Insumo</th>
+                    <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700 }}>Stock Disp.</th>
                     <th style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700 }}>Cant.</th>
                     <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>Precio Unitario</th>
                     <th style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>Subtotal</th>
@@ -453,60 +529,90 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((it, idx) => (
-                    <tr
-                      key={idx}
-                      style={{
-                        borderBottom: '1px solid var(--border-soft)',
-                        background: idx % 2 === 0 ? '#FFFFFF' : '#FDFBF7',
-                      }}
-                    >
-                      <td style={{ padding: '10px 14px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {it.codigo_mercaderia}
-                      </td>
-                      <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2C221E' }}>
-                        {it.nombre}
-                      </td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 600 }}>
-                        <span style={{ background: '#F2ECE4', padding: '2px 8px', borderRadius: '4px' }}>
-                          {it.cantidad}
-                        </span>
-                      </td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                        {formatQuetzales(it.precio_aplicado)}
-                      </td>
-                      <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: '#C85A32' }}>
-                        {formatQuetzales(it.subtotal)}
-                      </td>
-                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(idx)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#DC2626',
-                            cursor: 'pointer',
-                            padding: '6px',
-                            borderRadius: '6px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'background 0.2s ease',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'none';
-                          }}
-                          title="Eliminar insumo de la cotización"
-                        >
-                          <Icons.Trash size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {items.map((it, idx) => {
+                    const isExcedido = it.cantidad > it.stock_disponible;
+                    return (
+                      <tr
+                        key={idx}
+                        style={{
+                          borderBottom: '1px solid var(--border-soft)',
+                          background: isExcedido
+                            ? '#FEF2F2'
+                            : idx % 2 === 0
+                            ? '#FFFFFF'
+                            : '#FDFBF7',
+                        }}
+                      >
+                        <td style={{ padding: '10px 14px', fontFamily: 'ui-monospace, monospace', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {it.codigo_mercaderia}
+                        </td>
+                        <td style={{ padding: '10px 14px', fontWeight: 600, color: '#2C221E' }}>
+                          <div>{it.nombre}</div>
+                          {isExcedido && (
+                            <div style={{ fontSize: '11px', color: '#DC2626', fontWeight: 700, marginTop: '2px' }}>
+                              ⚠️ Supera el stock disponible ({it.stock_disponible} en almacén). Modifica la cantidad para continuar.
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'center', fontWeight: 700, color: isExcedido ? '#DC2626' : '#16a34a' }}>
+                          {it.stock_disponible}
+                        </td>
+                        <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            value={it.cantidad}
+                            onChange={(e) => handleUpdateItemQuantity(idx, e.target.value)}
+                            style={{
+                              width: '70px',
+                              padding: '4px 6px',
+                              textAlign: 'center',
+                              borderRadius: '6px',
+                              fontWeight: 700,
+                              fontSize: '13px',
+                              border: isExcedido ? '2px solid #DC2626' : '1px solid #E6DFD5',
+                              backgroundColor: isExcedido ? '#FEE2E2' : '#FFFFFF',
+                              color: isExcedido ? '#991B1B' : '#2C221E',
+                            }}
+                            title="Puedes editar la cantidad directamente aquí"
+                          />
+                        </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                          {formatQuetzales(it.precio_aplicado)}
+                        </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: '#C85A32' }}>
+                          {formatQuetzales(it.subtotal)}
+                        </td>
+                        <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(idx)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#DC2626',
+                              cursor: 'pointer',
+                              padding: '6px',
+                              borderRadius: '6px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'background 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(220, 38, 38, 0.1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'none';
+                            }}
+                            title="Eliminar insumo de la cotización"
+                          >
+                            <Icons.Trash size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -530,6 +636,28 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
           )}
         </div>
 
+        {/* ALERTA DE STOCK EXCEDIDO */}
+        {hayStockInsuficiente && (
+          <div
+            style={{
+              padding: '10px 16px',
+              borderRadius: '8px',
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FECACA',
+              color: '#991B1B',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
+            <Icons.AlertTriangle size={18} style={{ color: '#DC2626', flexShrink: 0 }} />
+            <span>
+              Uno o más insumos superan el stock disponible. Corrige las cantidades en la columna <strong>Cant.</strong> para poder guardar la cotización.
+            </span>
+          </div>
+        )}
+
         {/* TOTAL Y ACCIONES */}
         <div
           style={{
@@ -551,7 +679,7 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
             <button
               type="button"
               className="btn-ghost"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isSubmitting}
               style={{ padding: '10px 18px' }}
             >
@@ -561,13 +689,16 @@ export default function CotizacionManualModal({ isOpen, onClose }: CotizacionMan
             <button
               type="submit"
               className="btn-solid"
-              disabled={isSubmitting || items.length === 0}
+              disabled={isSubmitting || items.length === 0 || hayStockInsuficiente}
               style={{
                 padding: '10px 24px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
+                opacity: hayStockInsuficiente ? 0.6 : 1,
+                cursor: hayStockInsuficiente ? 'not-allowed' : 'pointer',
               }}
+              title={hayStockInsuficiente ? 'Corrige las cantidades que superan el stock disponible' : 'Crear cotización'}
             >
               {isSubmitting ? (
                 <>

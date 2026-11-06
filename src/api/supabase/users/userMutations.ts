@@ -46,17 +46,19 @@ export async function createUserAdminMutation(data: CreateUserData): Promise<{ s
     }
 
     // 2. Registrar en la tabla pública usuarios vinculando el rol_id, correo, nombre y apellido
+    const usuarioPayload = {
+      id: String(authData.user.id),
+      nombre: cleanNombre,
+      apellido: cleanApellido,
+      correo: cleanEmail,
+      rol_id: Number(data.rol_id),
+      telegram_username: cleanTelegram || null,
+      estado: true,
+    };
+
     const { error: dbError } = await supabase
       .from('usuarios')
-      .upsert({
-        id: authData.user.id,
-        nombre: cleanNombre,
-        apellido: cleanApellido,
-        correo: cleanEmail,
-        rol_id: data.rol_id,
-        telegram_username: cleanTelegram || null,
-        estado: true,
-      }, { onConflict: 'id' });
+      .upsert(usuarioPayload, { onConflict: 'id' });
 
     if (dbError) {
       console.error('Error insertando en public.usuarios:', dbError);
@@ -76,9 +78,19 @@ export async function updateUserMutation(userId: string, data: {
   telegram_username?: string | null;
   estado?: boolean;
 }): Promise<{ success: boolean; error?: any }> {
+  const payload: Record<string, any> = {};
+
+  if (data.nombre !== undefined) payload.nombre = String(data.nombre).trim();
+  if (data.apellido !== undefined) payload.apellido = data.apellido ? String(data.apellido).trim() : null;
+  if (data.rol_id !== undefined) payload.rol_id = data.rol_id ? Number(data.rol_id) : null;
+  if (data.telegram_username !== undefined) {
+    payload.telegram_username = data.telegram_username ? String(data.telegram_username).replace(/^@/, '').trim() : null;
+  }
+  if (data.estado !== undefined) payload.estado = Boolean(data.estado);
+
   const { error } = await supabase
     .from('usuarios')
-    .update(data)
+    .update(payload)
     .eq('id', userId);
 
   if (error) {

@@ -1,17 +1,12 @@
 import { supabase } from '../../utils/supabase';
 import type { Mercaderia, Cliente, Cotizacion, CanalOrigen } from '../../types/database';
 
-export interface CreateMercaderiaInput {
-  codigo_mercaderia: string;
-  nombre: string;
-  categoria_id?: number | null;
-  nueva_categoria?: string;
-  precio_unitario: number;
-  stock_actual: number;
-}
+// ============================================================================
+// 0. GESTIÓN DE CATEGORÍAS (MÓDULO DE REFERENCIA)
+// ============================================================================
 
 /**
- * 0. Crear nueva categoría de mercadería
+ * 0.1 Crear nueva categoría de mercadería
  */
 export async function createCategoriaMutation(nombre: string, descripcion?: string | null): Promise<number> {
   const cleanNombre = nombre.trim();
@@ -40,7 +35,7 @@ export async function createCategoriaMutation(nombre: string, descripcion?: stri
 }
 
 /**
- * 0.1 Actualizar categoría existente
+ * 0.2 Actualizar categoría existente
  */
 export async function updateCategoriaMutation(id: number, data: { nombre: string; descripcion?: string | null }): Promise<void> {
   const { error } = await supabase
@@ -58,7 +53,7 @@ export async function updateCategoriaMutation(id: number, data: { nombre: string
 }
 
 /**
- * 0.2 Eliminar categoría de forma segura
+ * 0.3 Eliminar categoría de forma segura
  */
 export async function deleteCategoriaMutation(id: number): Promise<void> {
   // Verificar si existen mercaderías asociadas
@@ -87,7 +82,7 @@ export async function deleteCategoriaMutation(id: number): Promise<void> {
 }
 
 /**
- * 0.3 Verificar si un código de mercadería ya existe en public.mercaderias
+ * 0.4 Verificar si un código de mercadería ya existe en public.mercaderias
  */
 export async function checkCodigoMercaderiaExists(codigo: string): Promise<boolean> {
   const { data } = await supabase
@@ -99,104 +94,9 @@ export async function checkCodigoMercaderiaExists(codigo: string): Promise<boole
   return Boolean(data);
 }
 
-/**
- * 1. Crear nueva mercadería en el catálogo
- */
-export async function createMercaderiaMutation(
-  input: CreateMercaderiaInput
-): Promise<Mercaderia> {
-  let targetCategoriaId = input.categoria_id;
-
-  if (input.nueva_categoria && input.nueva_categoria.trim()) {
-    targetCategoriaId = await createCategoriaMutation(input.nueva_categoria.trim());
-  }
-
-  const { data, error } = await supabase
-    .from('mercaderias')
-    .insert({
-      codigo_mercaderia: input.codigo_mercaderia.trim().toUpperCase(),
-      nombre: input.nombre.trim(),
-      categoria_id: targetCategoriaId || null,
-      precio_unitario: Number(input.precio_unitario),
-      stock_actual: Number(input.stock_actual) || 0,
-    })
-    .select('*, categorias:categoria_id(id, nombre, descripcion)')
-    .single();
-
-  if (error) {
-    console.error('Error al crear mercadería:', error);
-    throw new Error(`Error al registrar mercadería: ${error.message}`);
-  }
-
-  return data;
-}
-
-/**
- * 2. Actualizar stock de mercadería (Ingreso o Devolución)
- */
-
-export interface UpdateMercaderiaDatosGeneralesInput {
-  id: number;
-  nombre: string;
-  categoria_id?: number | null;
-  nueva_categoria?: string;
-  codigo_mercaderia?: string;
-}
-
-/**
- * 1.1 Actualizar datos generales de mercadería (Excluye precio y stock)
- */
-export async function updateMercaderiaGeneralMutation(
-  input: UpdateMercaderiaDatosGeneralesInput
-): Promise<Mercaderia> {
-  let targetCategoriaId = input.categoria_id;
-
-  if (input.nueva_categoria && input.nueva_categoria.trim()) {
-    targetCategoriaId = await createCategoriaMutation(input.nueva_categoria.trim());
-  }
-
-  const updatePayload: Record<string, any> = {
-    nombre: input.nombre.trim(),
-    categoria_id: targetCategoriaId || null,
-  };
-
-  if (input.codigo_mercaderia && input.codigo_mercaderia.trim()) {
-    updatePayload.codigo_mercaderia = input.codigo_mercaderia.trim().toUpperCase();
-  }
-
-  const { data, error } = await supabase
-    .from('mercaderias')
-    .update(updatePayload)
-    .eq('id', input.id)
-    .select('*, categorias:categoria_id(id, nombre, descripcion)')
-    .single();
-
-  if (error) {
-    console.error('Error al actualizar datos de mercadería:', error);
-    throw new Error('Error al actualizar mercaderia');
-  }
-
-  return data;
-}
-
-export async function updateMercaderiaStockMutation(
-  id: number,
-  nuevoStock: number
-): Promise<Mercaderia> {
-  const { data, error } = await supabase
-    .from('mercaderias')
-    .update({ stock_actual: Math.max(0, nuevoStock) })
-    .eq('id', id)
-    .select('*, categorias:categoria_id(id, nombre, descripcion)')
-    .single();
-
-  if (error) {
-    console.error('Error al actualizar stock:', error);
-    throw new Error(`Error al actualizar inventario: ${error.message}`);
-  }
-
-  return data;
-}
+// ============================================================================
+// 1. GESTIÓN DE CLIENTES
+// ============================================================================
 
 export interface CreateClienteInput {
   nombre_institucion: string;
@@ -207,56 +107,70 @@ export interface CreateClienteInput {
 }
 
 /**
- * 3. Crear cliente
+ * 1.1 Crear nuevo cliente
+ * Inserción directa en public.clientes con objeto plano
  */
 export async function createClienteMutation(input: CreateClienteInput): Promise<Cliente> {
   const { data, error } = await supabase
     .from('clientes')
     .insert({
-      nombre_institucion: input.nombre_institucion.trim(),
-      contacto_persona: input.contacto_persona?.trim() || null,
-      nit: input.nit?.trim() || null,
-      telefono: input.telefono?.trim() || null,
-      direccion: input.direccion?.trim() || null,
+      nombre_institucion: String(input.nombre_institucion || '').trim(),
+      contacto_persona: input.contacto_persona ? String(input.contacto_persona).trim() : null,
+      nit: input.nit ? String(input.nit).trim() : null,
+      telefono: input.telefono ? String(input.telefono).trim() : null,
+      direccion: input.direccion ? String(input.direccion).trim() : null,
     })
-    .select('*')
+    .select('id')
     .single();
 
-  if (error) {
+  if (error || !data) {
     console.error('Error al registrar cliente:', error);
-    throw new Error(`Error al crear cliente: ${error.message}`);
+    throw new Error(`Error al crear cliente: ${error?.message || 'Error desconocido'}`);
   }
 
-  return data;
+  return {
+    id: data.id,
+    nombre_institucion: String(input.nombre_institucion || '').trim(),
+    contacto_persona: input.contacto_persona ? String(input.contacto_persona).trim() : null,
+    nit: input.nit ? String(input.nit).trim() : null,
+    telefono: input.telefono ? String(input.telefono).trim() : null,
+    direccion: input.direccion ? String(input.direccion).trim() : null,
+  } as Cliente;
 }
 
 /**
- * 3.1 Actualizar cliente existente
+ * 1.2 Actualizar cliente existente
+ * Actualización directa en public.clientes con objeto plano
  */
 export async function updateClienteMutation(id: number, input: CreateClienteInput): Promise<Cliente> {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('clientes')
     .update({
-      nombre_institucion: input.nombre_institucion.trim(),
-      contacto_persona: input.contacto_persona?.trim() || null,
-      nit: input.nit?.trim() || null,
-      telefono: input.telefono?.trim() || null,
-      direccion: input.direccion?.trim() || null,
+      nombre_institucion: String(input.nombre_institucion || '').trim(),
+      contacto_persona: input.contacto_persona ? String(input.contacto_persona).trim() : null,
+      nit: input.nit ? String(input.nit).trim() : null,
+      telefono: input.telefono ? String(input.telefono).trim() : null,
+      direccion: input.direccion ? String(input.direccion).trim() : null,
     })
-    .eq('id', id)
-    .select('*')
-    .single();
+    .eq('id', id);
 
   if (error) {
     console.error('Error al actualizar cliente:', error);
     throw new Error(`Error al actualizar cliente: ${error.message}`);
   }
 
-  return data;
+  return {
+    id,
+    nombre_institucion: String(input.nombre_institucion || '').trim(),
+    contacto_persona: input.contacto_persona ? String(input.contacto_persona).trim() : null,
+    nit: input.nit ? String(input.nit).trim() : null,
+    telefono: input.telefono ? String(input.telefono).trim() : null,
+    direccion: input.direccion ? String(input.direccion).trim() : null,
+  } as Cliente;
 }
 
 /**
- * 3.2 Eliminar cliente de forma segura
+ * 1.3 Eliminar cliente de forma segura
  */
 export async function deleteClienteMutation(id: number): Promise<void> {
   // Verificar si existen cotizaciones vinculadas
@@ -284,6 +198,141 @@ export async function deleteClienteMutation(id: number): Promise<void> {
   }
 }
 
+// ============================================================================
+// 2. CATÁLOGO DE MERCADERÍAS
+// ============================================================================
+
+export interface CreateMercaderiaInput {
+  codigo_mercaderia: string;
+  nombre: string;
+  categoria_id?: number | null;
+  nueva_categoria?: string;
+  precio_unitario: number;
+  stock_actual: number;
+  unidad_medida_id?: number | null;
+}
+
+/**
+ * 2.1 Crear nueva mercadería en el catálogo
+ * Inserción directa en public.mercaderias con objeto plano
+ */
+export async function createMercaderiaMutation(
+  input: CreateMercaderiaInput
+): Promise<Mercaderia> {
+  let targetCategoriaId = input.categoria_id ? Number(input.categoria_id) : null;
+
+  if (input.nueva_categoria && input.nueva_categoria.trim()) {
+    targetCategoriaId = await createCategoriaMutation(input.nueva_categoria.trim());
+  }
+
+  const { data, error } = await supabase
+    .from('mercaderias')
+    .insert({
+      codigo_mercaderia: String(input.codigo_mercaderia || '').trim().toUpperCase(),
+      nombre: String(input.nombre || '').trim(),
+      categoria_id: targetCategoriaId,
+      precio_unitario: Number(Number(input.precio_unitario || 0).toFixed(2)),
+      stock_actual: Math.floor(Number(input.stock_actual || 0)),
+      unidad_medida_id: input.unidad_medida_id ? Number(input.unidad_medida_id) : null,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    console.error('Error al crear mercadería:', error);
+    throw new Error(`Error al registrar mercadería: ${error?.message || 'Error desconocido'}`);
+  }
+
+  return {
+    id: data.id,
+    codigo_mercaderia: String(input.codigo_mercaderia || '').trim().toUpperCase(),
+    nombre: String(input.nombre || '').trim(),
+    categoria_id: targetCategoriaId,
+    precio_unitario: Number(Number(input.precio_unitario || 0).toFixed(2)),
+    stock_actual: Math.floor(Number(input.stock_actual || 0)),
+    unidad_medida_id: input.unidad_medida_id ? Number(input.unidad_medida_id) : null,
+  } as unknown as Mercaderia;
+}
+
+export interface UpdateMercaderiaDatosGeneralesInput {
+  id: number;
+  nombre: string;
+  categoria_id?: number | null;
+  nueva_categoria?: string;
+  codigo_mercaderia?: string;
+  unidad_medida_id?: number | null;
+}
+
+/**
+ * 2.2 Actualizar datos generales de mercadería (Excluye precio y stock)
+ * Actualización directa en public.mercaderias
+ */
+export async function updateMercaderiaGeneralMutation(
+  input: UpdateMercaderiaDatosGeneralesInput
+): Promise<Mercaderia> {
+  let targetCategoriaId = input.categoria_id ? Number(input.categoria_id) : null;
+
+  if (input.nueva_categoria && input.nueva_categoria.trim()) {
+    targetCategoriaId = await createCategoriaMutation(input.nueva_categoria.trim());
+  }
+
+  const updateData: Record<string, any> = {
+    nombre: String(input.nombre || '').trim(),
+    categoria_id: targetCategoriaId,
+  };
+
+  if (input.codigo_mercaderia && input.codigo_mercaderia.trim()) {
+    updateData.codigo_mercaderia = String(input.codigo_mercaderia).trim().toUpperCase();
+  }
+
+  if (input.unidad_medida_id !== undefined) {
+    updateData.unidad_medida_id = input.unidad_medida_id ? Number(input.unidad_medida_id) : null;
+  }
+
+  const { error } = await supabase
+    .from('mercaderias')
+    .update(updateData)
+    .eq('id', input.id);
+
+  if (error) {
+    console.error('Error al actualizar datos de mercadería:', error);
+    throw new Error(`Error al actualizar mercadería: ${error.message}`);
+  }
+
+  return { id: input.id, ...updateData } as unknown as Mercaderia;
+}
+
+// ============================================================================
+// 3. GESTIÓN DE INVENTARIO (AJUSTE DE STOCK)
+// ============================================================================
+
+/**
+ * 3.1 Actualizar stock de mercadería (Ingreso o Devolución)
+ * Actualización directa sobre el campo stock_actual de public.mercaderias
+ */
+export async function updateMercaderiaStockMutation(
+  id: number,
+  nuevoStock: number
+): Promise<Mercaderia> {
+  const stockFinal = Math.max(0, Math.floor(Number(nuevoStock) || 0));
+
+  const { error } = await supabase
+    .from('mercaderias')
+    .update({ stock_actual: stockFinal })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error al actualizar stock:', error);
+    throw new Error(`Error al actualizar inventario: ${error.message}`);
+  }
+
+  return { id, stock_actual: stockFinal } as unknown as Mercaderia;
+}
+
+// ============================================================================
+// 4. BANDEJA DE COTIZACIONES
+// ============================================================================
+
 export interface ItemCotizacionInput {
   mercaderia_id: number;
   cantidad: number;
@@ -299,7 +348,8 @@ export interface CreateCotizacionManualInput {
 }
 
 /**
- * 4. Registrar cotización manual y sus detalles en Supabase
+ * 4.1 Registrar cotización manual y sus detalles en Supabase
+ * Enfoque relacional limpio en dos pasos (Paso A: cabecera, Paso B: detalles individuales)
  */
 export async function createCotizacionManualMutation(
   input: CreateCotizacionManualInput
@@ -326,53 +376,60 @@ export async function createCotizacionManualMutation(
   const year = now.getFullYear();
   const codigo_cotizacion = `COT-${year}-${randomSuffix}`;
 
-  // Calcular total
-  const total_quetzales = input.items.reduce(
-    (acc, it) => acc + Number(it.cantidad) * Number(it.precio_aplicado),
-    0
+  // Calcular total de forma numérica pura
+  const total_quetzales = Number(
+    input.items
+      .reduce((acc, it) => acc + Number(it.cantidad) * Number(it.precio_aplicado), 0)
+      .toFixed(2)
   );
 
-  // 1. Insertar encabezado de cotización
+  // Paso A: Insertar encabezado en public.cotizaciones y obtener id
   const { data: cotizacion, error: cotizacionError } = await supabase
     .from('cotizaciones')
     .insert({
-      codigo_cotizacion,
-      cliente_id: targetClienteId,
-      colaborador_id: input.colaborador_id || null,
-      canal_origen: input.canal_origen || 'web',
+      codigo_cotizacion: String(codigo_cotizacion),
+      cliente_id: Number(targetClienteId),
+      colaborador_id: input.colaborador_id ? String(input.colaborador_id) : null,
+      canal_origen: String(input.canal_origen || 'web'),
       total_quetzales,
       estado: 'Pendiente',
     })
-    .select(`
-      *,
-      clientes:cliente_id(id, nombre_institucion, contacto_persona, nit, telefono, direccion),
-      usuarios:colaborador_id(id, nombre, correo)
-    `)
+    .select('id')
     .single();
 
   if (cotizacionError || !cotizacion) {
     console.error('Error insertando cotización:', cotizacionError);
-    throw new Error(`Error al crear la cotización: ${cotizacionError?.message}`);
+    throw new Error(`Error al crear la cotización: ${cotizacionError?.message || 'Error desconocido'}`);
   }
 
-  // 2. Insertar los detalles de cotización
-  const detallesToInsert = input.items.map((it) => ({
-    cotizacion_id: cotizacion.id,
-    mercaderia_id: it.mercaderia_id,
-    cantidad: Number(it.cantidad),
-    precio_aplicado: Number(it.precio_aplicado),
-  }));
+  // Paso B: Recorrer los ítems e insertarlos uno por uno en public.detalle_cotizacion
+  for (const it of input.items) {
+    const { error: detalleError } = await supabase
+      .from('detalle_cotizacion')
+      .insert({
+        cotizacion_id: Number(cotizacion.id),
+        mercaderia_id: Number(it.mercaderia_id),
+        cantidad: Math.floor(Number(it.cantidad)),
+        precio_aplicado: Number(Number(it.precio_aplicado).toFixed(2)),
+      });
 
-  const { error: detalleError } = await supabase
-    .from('detalle_cotizacion')
-    .insert(detallesToInsert);
-
-  if (detalleError) {
-    console.error('Error insertando detalle_cotizacion:', detalleError);
-    // Limpieza de rollback en caso de fallo
-    await supabase.from('cotizaciones').delete().eq('id', cotizacion.id);
-    throw new Error(`Error al registrar el detalle de la cotización: ${detalleError.message}`);
+    if (detalleError) {
+      console.error('Error insertando detalle_cotizacion:', detalleError);
+      // Rollback de seguridad
+      await supabase.from('detalle_cotizacion').delete().eq('cotizacion_id', cotizacion.id);
+      await supabase.from('cotizaciones').delete().eq('id', cotizacion.id);
+      throw new Error(`Error al registrar el detalle de la cotización: ${detalleError.message}`);
+    }
   }
 
-  return cotizacion;
+  return {
+    id: cotizacion.id,
+    codigo_cotizacion,
+    cliente_id: Number(targetClienteId),
+    colaborador_id: input.colaborador_id || null,
+    canal_origen: input.canal_origen || 'web',
+    total_quetzales,
+    estado: 'Pendiente',
+    fecha_emision: new Date().toISOString(),
+  } as unknown as Cotizacion;
 }

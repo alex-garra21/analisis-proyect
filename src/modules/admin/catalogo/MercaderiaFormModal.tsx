@@ -151,12 +151,28 @@ export default function MercaderiaFormModal({
     setIsSubmitting(true);
     try {
       if (isEditing && mercaderiaToEdit) {
-        // CASO EDICIÓN: Solo datos generales (nombre, categoría)
+        // CASO EDICIÓN: Datos generales del modal (nombre, categoría, y actualización del código según la unidad de medida si cambió)
+        let finalCodigo = codigo;
+        const selectedUnit = unidades.find((u) => String(u.id) === String(unidadId));
+        if (selectedUnit && codigo) {
+          const unitAbbr = (selectedUnit.abreviatura || selectedUnit.nombre || 'UND')
+            .toUpperCase()
+            .slice(0, 3)
+            .padEnd(3, 'X');
+          const parts = codigo.split('-');
+          if (parts.length >= 3) {
+            parts[parts.length - 1] = unitAbbr;
+            finalCodigo = parts.join('-');
+          }
+        }
+
         await updateMercaderiaMutation.mutateAsync({
           id: mercaderiaToEdit.id,
           nombre: nombre.trim(),
           categoria_id: !isNuevaCategoria && categoriaId ? Number(categoriaId) : null,
           nueva_categoria: isNuevaCategoria ? nuevaCategoria.trim() : undefined,
+          codigo_mercaderia: finalCodigo || undefined,
+          unidad_medida_id: unidadId ? Number(unidadId) : null,
         });
 
         showToast(`Mercadería "${nombre.trim()}" actualizada exitosamente.`, 'success');
@@ -226,6 +242,7 @@ export default function MercaderiaFormModal({
           nueva_categoria: isNuevaCategoria ? nuevaCategoria.trim() : undefined,
           precio_unitario: precio,
           stock_actual: stock,
+          unidad_medida_id: unidadId ? Number(unidadId) : null,
         });
 
         showToast(`Producto registrado exitosamente con código ${finalCodigo}.`, 'success');
@@ -358,7 +375,7 @@ export default function MercaderiaFormModal({
                 value={unidadId}
                 onChange={(val) => setUnidadId(val)}
                 placeholder="Seleccionar unidad..."
-                disabled={isLoadingUnidades || isEditing}
+                disabled={isLoadingUnidades}
               />
             </FormField>
           </div>
