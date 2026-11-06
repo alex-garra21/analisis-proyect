@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../../../components/ui/Modal';
 import FormField from '../../../components/ui/FormField';
 import AutocompleteSelect from '../../../components/ui/AutocompleteSelect';
@@ -30,25 +30,44 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
   const [telegramUsername, setTelegramUsername] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Función para resetear completamente el estado del formulario a valores limpios
+  const resetForm = useCallback(() => {
+    setNombres('');
+    setApellidos('');
+    setCorreo('');
+    setPasswordTemporal('');
+    const defaultRole = roles.find((r) => r.nombre === 'colaborador') || roles[0];
+    setRolId(defaultRole ? defaultRole.id : 3);
+    setTelegramUsername('');
+    setIsSubmitting(false);
+  }, [roles]);
+
+  // Manejo de apertura / cierre y cambios en userToEdit
   useEffect(() => {
-    if (userToEdit) {
-      setNombres(userToEdit.nombre || '');
-      setApellidos(userToEdit.apellido || '');
-      setCorreo(userToEdit.correo || '');
-      setPasswordTemporal('');
-      setRolId(userToEdit.rol_id || 3);
-      setTelegramUsername(userToEdit.telegram_username ? userToEdit.telegram_username.replace(/^@/, '') : '');
+    if (isOpen) {
+      if (userToEdit) {
+        setNombres(userToEdit.nombre || '');
+        setApellidos(userToEdit.apellido || '');
+        setCorreo(userToEdit.correo || '');
+        setPasswordTemporal('');
+        setRolId(userToEdit.rol_id || 3);
+        setTelegramUsername(
+          userToEdit.telegram_username ? userToEdit.telegram_username.replace(/^@/, '') : ''
+        );
+      } else {
+        resetForm();
+      }
     } else {
-      setNombres('');
-      setApellidos('');
-      setCorreo('');
-      setPasswordTemporal('');
-      // Seleccionar colaborador por defecto o el primer rol
-      const defaultRole = roles.find(r => r.nombre === 'colaborador') || roles[0];
-      setRolId(defaultRole ? defaultRole.id : 3);
-      setTelegramUsername('');
+      // Limpiar el estado al cerrarse el modal
+      resetForm();
     }
-  }, [userToEdit, isOpen, roles]);
+  }, [isOpen, userToEdit, resetForm]);
+
+  // Manejador seguro para cerrar y resetear el modal
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const passwordValidation = !isEditing && passwordTemporal.length > 0 
     ? validatePasswordStrength(passwordTemporal) 
@@ -98,7 +117,7 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
           showToast(`Error al actualizar usuario: ${res.error.message || res.error}`, 'error');
         } else {
           showToast('Usuario actualizado correctamente', 'success');
-          onClose();
+          handleClose();
         }
       } else {
         // Modo Creación
@@ -115,7 +134,7 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
           showToast(`Error al registrar usuario: ${res.error}`, 'error');
         } else {
           showToast('Usuario creado exitosamente en Auth y base de datos', 'success');
-          onClose();
+          handleClose();
         }
       }
     } catch (err: any) {
@@ -128,7 +147,7 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title={isEditing ? 'Editar Usuario' : 'Nuevo Usuario'}
       maxWidth="580px"
       padding="2rem 2.25rem"
@@ -139,16 +158,22 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
           : 'Registra un nuevo usuario en Supabase Auth y asigna su rol dentro del sistema.'}
       </p>
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      <form
+        onSubmit={handleSubmit}
+        autoComplete="off"
+        style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+      >
         {/* Nombres y Apellidos en dos columnas */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
           <FormField label="Nombres">
             <input
               type="text"
+              name="nombres_user"
               className="dashboard-input"
               value={nombres}
               onChange={(e) => setNombres(e.target.value)}
               placeholder="Ej. Juan Carlos"
+              autoComplete="off"
               required
             />
           </FormField>
@@ -156,10 +181,12 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
           <FormField label="Apellidos">
             <input
               type="text"
+              name="apellidos_user"
               className="dashboard-input"
               value={apellidos}
               onChange={(e) => setApellidos(e.target.value)}
               placeholder="Ej. Morales Pérez"
+              autoComplete="off"
               required
             />
           </FormField>
@@ -169,11 +196,13 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
         <FormField label="Correo Electrónico">
           <input
             type="email"
+            name="email_user"
             className="dashboard-input"
             value={correo}
             onChange={(e) => setCorreo(e.target.value)}
             placeholder="usuario@comercialflores.com"
             disabled={isEditing}
+            autoComplete="off"
             required
             style={{
               backgroundColor: isEditing ? 'var(--bg-app)' : 'var(--bg-input)',
@@ -190,6 +219,7 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
               value={passwordTemporal}
               onChange={(e) => setPasswordTemporal(e.target.value)}
               placeholder="Min. 6 caracteres (Mayús, Min, Núm)"
+              autoComplete="new-password"
               required
               success={passwordValidation?.isValid}
             />
@@ -234,11 +264,13 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
               </span>
               <input
                 type="text"
+                name="telegram_user"
                 className="dashboard-input"
                 style={{ paddingLeft: '28px' }}
                 value={telegramUsername}
                 onChange={(e) => setTelegramUsername(e.target.value.replace(/^@/, ''))}
                 placeholder="alias_telegram"
+                autoComplete="off"
               />
             </div>
             <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
@@ -262,7 +294,7 @@ export default function UserFormModal({ isOpen, onClose, userToEdit }: UserFormM
           <button
             type="button"
             className="btn-ghost"
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             style={{ padding: '10px 18px' }}
           >

@@ -22,6 +22,7 @@ const BandejaCotizacionesPage = lazy(() => import('./pages/private/BandejaCotiza
 const CategoriasModule = lazy(() => import('./modules/admin/categorias/CategoriasModule'));
 const ClientesModule = lazy(() => import('./modules/admin/clientes/ClientesModule'));
 const UsersModule = lazy(() => import('./modules/admin/usuarios/UsersModule'));
+const AuditoriaPage = lazy(() => import('./pages/private/AuditoriaPage'));
 
 import { DashboardTitleProvider } from './utils/DashboardTitleContext';
 import { ROUTES, seg, plainPath } from './routes/routeMap';
@@ -139,6 +140,7 @@ function App() {
             <Route path={seg('categorias')} element={<CategoriasModule />} />
             <Route path={seg('clientes')} element={<ClientesModule />} />
             <Route path={seg('usuarios')} element={<UsersModule />} />
+            <Route path={seg('auditoria')} element={<AuditoriaPage />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 

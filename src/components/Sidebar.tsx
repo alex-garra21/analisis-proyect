@@ -58,10 +58,11 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
     );
   }
 
-  // - Solo Sistemas: Gestión de Usuarios / Roles
+  // - Solo Sistemas: Gestión de Usuarios / Roles y Auditoría del Sistema
   if (isUserSistemas) {
     menuItems.push(
-      { id: 'usuarios', label: 'Usuarios y Roles', Icon: Icons.Users, section: 'SISTEMAS' }
+      { id: 'usuarios', label: 'Usuarios y Roles', Icon: Icons.Users, section: 'SISTEMAS' },
+      { id: 'auditoria', label: 'Auditoría del Sistema', Icon: Icons.Shield, section: 'SISTEMAS' }
     );
   }
 

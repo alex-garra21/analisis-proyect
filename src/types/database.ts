@@ -93,6 +93,22 @@ export interface DetalleCotizacion {
   mercaderias?: Mercaderia | null;
 }
 
+export interface AuditoriaRegistro {
+  id: string; // uuid
+  usuario_id: string | null;
+  modulo: string;
+  accion: string;
+  descripcion: string;
+  detalles: Record<string, any> | null;
+  created_at: string;
+  usuarios?: {
+    id?: string;
+    nombre?: string;
+    apellido?: string | null;
+    correo?: string;
+  } | null;
+}
+
 export const formatQuetzales = (value: number | string | null | undefined): string => {
   const num = typeof value === 'string' ? parseFloat(value) : (value ?? 0);
   return `Q. ${(isNaN(num) ? 0 : num).toLocaleString('es-GT', {

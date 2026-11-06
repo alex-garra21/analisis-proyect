@@ -2,7 +2,7 @@ import { encodeId, decodeId } from '../utils/routerHasher';
 
 /**
  * Segmentos estáticos válidos para Comercial Flores del Campo
- * según el esquema oficial (roles, usuarios, categorias, mercaderias, clientes, cotizaciones).
+ * según el esquema oficial (roles, usuarios, categorias, mercaderias, clientes, cotizaciones, auditoria).
  */
 const STATIC_SEGMENTS = [
   // Públicas
@@ -20,6 +20,7 @@ const STATIC_SEGMENTS = [
   'categorias',
   'clientes',
   'usuarios',
+  'auditoria',
 ] as const;
 
 const STATIC_SET = new Set<string>(STATIC_SEGMENTS);
