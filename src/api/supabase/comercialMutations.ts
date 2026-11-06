@@ -433,3 +433,25 @@ export async function createCotizacionManualMutation(
     fecha_emision: new Date().toISOString(),
   } as unknown as Cotizacion;
 }
+
+/**
+ * 4.2 Actualizar estado de cotización (Aprobar / Rechazar)
+ * Actualización directa en public.cotizaciones con fecha_actualizacion
+ */
+export async function updateCotizacionEstadoMutation(
+  cotizacionId: number,
+  estado: 'Aprobada' | 'Rechazada'
+): Promise<void> {
+  const { error } = await supabase
+    .from('cotizaciones')
+    .update({
+      estado,
+      fecha_actualizacion: new Date().toISOString(),
+    })
+    .eq('id', cotizacionId);
+
+  if (error) {
+    console.error(`Error al actualizar estado de cotización #${cotizacionId} a ${estado}:`, error);
+    throw new Error(`Error al actualizar estado: ${error.message}`);
+  }
+}

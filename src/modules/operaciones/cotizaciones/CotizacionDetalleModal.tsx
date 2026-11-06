@@ -1,7 +1,11 @@
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Modal from '../../../components/ui/Modal';
 import { useCotizacion } from '../../../api/hooks/useComercial';
 import { formatQuetzales } from '../../../types/database';
 import { Icons } from '../../../components/Icons';
+import { supabase } from '../../../utils/supabase';
+import { showToast, showConfirm } from '../../../utils/swal';
 
 interface CotizacionDetalleModalProps {
   isOpen: boolean;
@@ -14,9 +18,110 @@ export default function CotizacionDetalleModal({
   onClose,
   cotizacionId,
 }: CotizacionDetalleModalProps) {
+  const queryClient = useQueryClient();
   const { data: cot, isLoading } = useCotizacion(cotizacionId);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [actionType, setActionType] = useState<'Aprobada' | 'Rechazada' | null>(null);
 
   if (!cotizacionId) return null;
+
+  const formatDateTimeWithSeconds = (dateString: string | null | undefined): string => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '-';
+      return new Intl.DateTimeFormat('es-GT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }).format(date);
+    } catch {
+      return '-';
+    }
+  };
+
+  const handleAprobar = async () => {
+    if (!cotizacionId || isUpdating) return;
+
+    const confirmed = await showConfirm(
+      '¿Aprobar cotización?',
+      `¿Deseas marcar la cotización "${cot?.codigo_cotizacion || ''}" como Aprobada?`,
+      'Sí, aprobar'
+    );
+    if (!confirmed) return;
+
+    setIsUpdating(true);
+    setActionType('Aprobada');
+    try {
+      const { error } = await supabase
+        .from('cotizaciones')
+        .update({
+          estado: 'Aprobada',
+          fecha_actualizacion: new Date().toISOString(),
+        })
+        .eq('id', cotizacionId);
+
+      if (error) {
+        console.error('Error al aprobar cotización:', error);
+        showToast(`Error al aprobar: ${error.message}`, 'error');
+        return;
+      }
+
+      showToast('Cotización aprobada correctamente.', 'success');
+      await queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
+      await queryClient.invalidateQueries({ queryKey: ['cotizacion', cotizacionId] });
+    } catch (err: any) {
+      console.error('Error inesperado al aprobar cotización:', err);
+      showToast(err.message || 'Error inesperado al aprobar cotización', 'error');
+    } finally {
+      setIsUpdating(false);
+      setActionType(null);
+    }
+  };
+
+  const handleRechazar = async () => {
+    if (!cotizacionId || isUpdating) return;
+
+    const confirmed = await showConfirm(
+      '¿Rechazar cotización?',
+      `¿Deseas marcar la cotización "${cot?.codigo_cotizacion || ''}" como Rechazada?`,
+      'Sí, rechazar',
+      true
+    );
+    if (!confirmed) return;
+
+    setIsUpdating(true);
+    setActionType('Rechazada');
+    try {
+      const { error } = await supabase
+        .from('cotizaciones')
+        .update({
+          estado: 'Rechazada',
+          fecha_actualizacion: new Date().toISOString(),
+        })
+        .eq('id', cotizacionId);
+
+      if (error) {
+        console.error('Error al rechazar cotización:', error);
+        showToast(`Error al rechazar: ${error.message}`, 'error');
+        return;
+      }
+
+      showToast('Cotización rechazada correctamente.', 'success');
+      await queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
+      await queryClient.invalidateQueries({ queryKey: ['cotizacion', cotizacionId] });
+    } catch (err: any) {
+      console.error('Error inesperado al rechazar cotización:', err);
+      showToast(err.message || 'Error inesperado al rechazar cotización', 'error');
+    } finally {
+      setIsUpdating(false);
+      setActionType(null);
+    }
+  };
 
   const getStatusBadge = (estado: string) => {
     switch (estado?.toLowerCase()) {
@@ -33,6 +138,21 @@ export default function CotizacionDetalleModal({
             }}
           >
             Aprobada
+          </span>
+        );
+      case 'rechazada':
+        return (
+          <span
+            style={{
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 700,
+              background: 'rgba(239, 68, 68, 0.12)',
+              color: '#dc2626',
+            }}
+          >
+            Rechazada
           </span>
         );
       case 'pendiente':
@@ -58,8 +178,8 @@ export default function CotizacionDetalleModal({
               borderRadius: '6px',
               fontSize: '12px',
               fontWeight: 700,
-              background: 'rgba(239, 68, 68, 0.12)',
-              color: '#dc2626',
+              background: 'rgba(107, 114, 128, 0.12)',
+              color: '#4b5563',
             }}
           >
             Anulada
@@ -106,7 +226,7 @@ export default function CotizacionDetalleModal({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
               gap: '1rem',
               background: 'var(--bg-app)',
               padding: '1.25rem',
@@ -134,13 +254,20 @@ export default function CotizacionDetalleModal({
                 Fecha de Emisión
               </span>
               <span style={{ fontWeight: 600, color: '#2C221E' }}>
-                {new Date(cot.fecha_emision).toLocaleDateString('es-GT', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {formatDateTimeWithSeconds(cot.fecha_emision)}
               </span>
             </div>
+
+            {cot.fecha_actualizacion && (
+              <div>
+                <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Última Actualización
+                </span>
+                <span style={{ fontWeight: 600, color: '#2C221E' }}>
+                  {formatDateTimeWithSeconds(cot.fecha_actualizacion)}
+                </span>
+              </div>
+            )}
 
             <div>
               <span style={{ color: 'var(--text-secondary)', display: 'block', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700 }}>
@@ -232,16 +359,101 @@ export default function CotizacionDetalleModal({
             </table>
           </div>
 
-          {/* Botón de Cerrar */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid var(--border-soft)' }}>
-            <button
-              type="button"
-              className="btn-ghost"
-              onClick={onClose}
-              style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 600 }}
-            >
-              Cerrar
-            </button>
+          {/* Barra de Acciones Inferior */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '1.25rem',
+              borderTop: '1px solid var(--border-soft)',
+              flexWrap: 'wrap',
+              gap: '12px',
+            }}
+          >
+            <div>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={onClose}
+                disabled={isUpdating}
+                style={{ padding: '9px 20px', fontSize: '13px', fontWeight: 600 }}
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {/* Los botones Aprobar/Rechazar se muestran ÚNICAMENTE cuando el estado es 'Pendiente' */}
+            {cot.estado === 'Pendiente' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={handleRechazar}
+                  disabled={isUpdating}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    background: 'rgba(239, 68, 68, 0.08)',
+                    color: '#dc2626',
+                    cursor: isUpdating ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUpdating) e.currentTarget.style.background = 'rgba(239, 68, 68, 0.16)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUpdating) e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+                  }}
+                >
+                  {isUpdating && actionType === 'Rechazada' ? (
+                    <Icons.RefreshCw size={15} className="animate-spin" />
+                  ) : (
+                    <Icons.X size={15} />
+                  )}
+                  <span>Rechazar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleAprobar}
+                  disabled={isUpdating}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '9px 18px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: '#16a34a',
+                    color: '#FFFFFF',
+                    cursor: isUpdating ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 1px 3px rgba(22, 163, 74, 0.3)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUpdating) e.currentTarget.style.background = '#15803d';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUpdating) e.currentTarget.style.background = '#16a34a';
+                  }}
+                >
+                  {isUpdating && actionType === 'Aprobada' ? (
+                    <Icons.RefreshCw size={15} className="animate-spin" />
+                  ) : (
+                    <Icons.Check size={15} />
+                  )}
+                  <span>Aprobar</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

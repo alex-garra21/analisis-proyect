@@ -19,6 +19,7 @@ import {
   updateClienteMutation,
   deleteClienteMutation,
   createCotizacionManualMutation,
+  updateCotizacionEstadoMutation,
 } from '../supabase/comercialMutations';
 import type {
   CreateMercaderiaInput,
@@ -97,7 +98,6 @@ export function useCreateMercaderia() {
     },
   });
 }
-
 
 export function useUpdateMercaderiaGeneral() {
   const queryClient = useQueryClient();
@@ -196,6 +196,18 @@ export function useCreateCotizacionManual() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
       queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+    },
+  });
+}
+
+export function useUpdateCotizacionEstado() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, estado }: { id: number; estado: 'Aprobada' | 'Rechazada' }) =>
+      updateCotizacionEstadoMutation(id, estado),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['cotizacion', variables.id] });
     },
   });
 }

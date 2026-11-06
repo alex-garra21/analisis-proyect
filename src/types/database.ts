@@ -64,7 +64,7 @@ export interface Cliente {
 }
 
 export type CanalOrigen = 'web' | 'telegram';
-export type EstadoCotizacion = 'Pendiente' | 'Aprobada' | 'Anulada' | string;
+export type EstadoCotizacion = 'Pendiente' | 'Aprobada' | 'Rechazada' | 'Anulada' | string;
 
 export interface Cotizacion {
   id: number;
@@ -76,6 +76,7 @@ export interface Cotizacion {
   total_quetzales: number;
   estado: EstadoCotizacion;
   fecha_emision: string;
+  fecha_actualizacion?: string | null;
   // Relaciones
   clientes?: Cliente | null;
   usuarios?: Usuario | null;

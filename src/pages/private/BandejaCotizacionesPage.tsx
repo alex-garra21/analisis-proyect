@@ -31,10 +31,12 @@ export default function BandejaCotizacionesPage() {
     switch (estado?.toLowerCase()) {
       case 'aprobada':
         return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(34, 197, 94, 0.1)', color: '#16a34a' }}>Aprobada</span>;
+      case 'rechazada':
+        return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626' }}>Rechazada</span>;
       case 'pendiente':
         return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(245, 158, 11, 0.1)', color: '#d97706' }}>Pendiente</span>;
       case 'anulada':
-        return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626' }}>Anulada</span>;
+        return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(107, 114, 128, 0.1)', color: '#4b5563' }}>Anulada</span>;
       default:
         return <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, background: 'rgba(59, 130, 246, 0.1)', color: '#2563eb' }}>{estado}</span>;
     }
