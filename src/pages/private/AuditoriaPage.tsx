@@ -7,6 +7,7 @@ import ModuleTitle from '../../components/ModuleTitle';
 import AdminTable from '../../components/ui/AdminTable';
 import AdminBadge from '../../components/ui/AdminBadge';
 import SearchBar from '../../components/ui/SearchBar';
+import AutocompleteSelect from '../../components/ui/AutocompleteSelect';
 import { Icons } from '../../components/Icons';
 import { maskPath } from '../../routes/routeMap';
 import AuditoriaDetalleModal from '../../modules/admin/auditoria/AuditoriaDetalleModal';
@@ -52,6 +53,28 @@ export default function AuditoriaPage() {
     });
     return Array.from(set).sort();
   }, [logs]);
+
+  const moduloOptions = useMemo(
+    () => [
+      { value: 'todos', label: 'Todos los módulos' },
+      ...uniqueModulos.map((mod) => ({
+        value: mod,
+        label: mod.toUpperCase(),
+      })),
+    ],
+    [uniqueModulos]
+  );
+
+  const accionOptions = useMemo(
+    () => [
+      { value: 'todas', label: 'Todas las acciones' },
+      ...uniqueAcciones.map((acc) => ({
+        value: acc,
+        label: acc,
+      })),
+    ],
+    [uniqueAcciones]
+  );
 
   // Filtrado reactivo en memoria
   const logsFiltrados = useMemo(() => {
@@ -259,67 +282,23 @@ export default function AuditoriaPage() {
           />
 
           {/* Filtro por Módulo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label
-              htmlFor="filter-modulo"
-              style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}
-            >
-              Módulo:
-            </label>
-            <select
-              id="filter-modulo"
+          <div style={{ minWidth: '190px', width: '200px' }}>
+            <AutocompleteSelect
+              options={moduloOptions}
               value={selectedModulo}
-              onChange={(e) => setSelectedModulo(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                fontSize: '13px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-med)',
-                background: 'var(--bg-input)',
-                color: 'var(--text-primary)',
-                fontFamily: 'inherit',
-                outline: 'none',
-              }}
-            >
-              <option value="todos">Todos los módulos</option>
-              {uniqueModulos.map((mod) => (
-                <option key={mod} value={mod}>
-                  {mod.toUpperCase()}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedModulo(val)}
+              placeholder="Filtrar por módulo..."
+            />
           </div>
 
           {/* Filtro por Acción */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <label
-              htmlFor="filter-accion"
-              style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}
-            >
-              Acción:
-            </label>
-            <select
-              id="filter-accion"
+          <div style={{ minWidth: '180px', width: '190px' }}>
+            <AutocompleteSelect
+              options={accionOptions}
               value={selectedAccion}
-              onChange={(e) => setSelectedAccion(e.target.value)}
-              style={{
-                padding: '8px 12px',
-                fontSize: '13px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-med)',
-                background: 'var(--bg-input)',
-                color: 'var(--text-primary)',
-                fontFamily: 'inherit',
-                outline: 'none',
-              }}
-            >
-              <option value="todas">Todas las acciones</option>
-              {uniqueAcciones.map((acc) => (
-                <option key={acc} value={acc}>
-                  {acc}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSelectedAccion(val)}
+              placeholder="Filtrar por acción..."
+            />
           </div>
 
           {/* Limpiar filtros */}

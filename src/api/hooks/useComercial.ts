@@ -20,12 +20,18 @@ import {
   deleteClienteMutation,
   createCotizacionManualMutation,
   updateCotizacionEstadoMutation,
+  createUnidadMedidaMutation,
+  updateUnidadMedidaMutation,
+  toggleUnidadMedidaStatusMutation,
+  deleteUnidadMedidaMutation,
 } from '../supabase/comercialMutations';
 import type {
   CreateMercaderiaInput,
   UpdateMercaderiaDatosGeneralesInput,
   CreateClienteInput,
   CreateCotizacionManualInput,
+  CreateUnidadMedidaInput,
+  UpdateUnidadMedidaInput,
 } from '../supabase/comercialMutations';
 
 export function useMercaderias() {
@@ -56,7 +62,7 @@ export function useUnidadesMedida() {
   return useQuery({
     queryKey: ['unidades_medida'],
     queryFn: getUnidadesMedidaQuery,
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -208,6 +214,55 @@ export function useUpdateCotizacionEstado() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['cotizaciones'] });
       queryClient.invalidateQueries({ queryKey: ['cotizacion', variables.id] });
+    },
+  });
+}
+
+/**
+ * MUTATION HOOKS - UNIDADES DE MEDIDA
+ */
+
+export function useCreateUnidadMedida() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateUnidadMedidaInput) => createUnidadMedidaMutation(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unidades_medida'] });
+    },
+  });
+}
+
+export function useUpdateUnidadMedida() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateUnidadMedidaInput }) =>
+      updateUnidadMedidaMutation(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unidades_medida'] });
+      queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+    },
+  });
+}
+
+export function useToggleUnidadMedidaStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, activo }: { id: number; activo: boolean }) =>
+      toggleUnidadMedidaStatusMutation(id, activo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unidades_medida'] });
+      queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+    },
+  });
+}
+
+export function useDeleteUnidadMedida() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteUnidadMedidaMutation(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['unidades_medida'] });
+      queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
     },
   });
 }

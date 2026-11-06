@@ -31,9 +31,10 @@ export interface Categoria {
 }
 
 export interface UnidadMedida {
-  id: number | string;
+  id: number;
   nombre: string;
   abreviatura?: string | null;
+  activo: boolean;
   created_at?: string;
 }
 
@@ -44,6 +45,8 @@ export interface Mercaderia {
   nombre: string;
   stock_actual: number;
   precio_unitario: number;
+  unidad_medida_id?: number | null;
+  activo?: boolean;
   created_at: string;
   // Relación cargada por join
   categorias?: {
@@ -51,6 +54,7 @@ export interface Mercaderia {
     nombre: string;
     descripcion?: string | null;
   } | null;
+  unidades_medida?: UnidadMedida | null;
 }
 
 export interface Cliente {

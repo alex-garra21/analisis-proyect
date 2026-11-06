@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Modal from '../../../components/ui/Modal';
 import { useCotizacion } from '../../../api/hooks/useComercial';
+import { useAuth } from '../../../api/hooks/useAuth';
 import { formatQuetzales } from '../../../types/database';
 import { Icons } from '../../../components/Icons';
 import { supabase } from '../../../utils/supabase';
@@ -19,9 +20,23 @@ export default function CotizacionDetalleModal({
   cotizacionId,
 }: CotizacionDetalleModalProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data: cot, isLoading } = useCotizacion(cotizacionId);
   const [isUpdating, setIsUpdating] = useState(false);
   const [actionType, setActionType] = useState<'Aprobada' | 'Rechazada' | null>(null);
+
+  // Control de Acceso Basado en Roles (RBAC):
+  // - Rol 'Colaborador': NO debe ver ni ejecutar Aprobar o Rechazar
+  // - Roles 'Sistemas' y 'Administrador': Autorizados para accionar
+  const userRole = (user?.rol || '').toLowerCase().trim();
+  const isColaborador = userRole === 'colaborador';
+  const isAuthorized =
+    !isColaborador &&
+    (userRole === 'sistemas' ||
+      userRole === 'administrador' ||
+      user?.correo === 'salexanderr2@gmail.com');
+
+  const showActionButtons = cot?.estado === 'Pendiente' && isAuthorized;
 
   if (!cotizacionId) return null;
 
@@ -45,7 +60,7 @@ export default function CotizacionDetalleModal({
   };
 
   const handleAprobar = async () => {
-    if (!cotizacionId || isUpdating) return;
+    if (!cotizacionId || isUpdating || !isAuthorized) return;
 
     const confirmed = await showConfirm(
       '¿Aprobar cotización?',
@@ -84,7 +99,7 @@ export default function CotizacionDetalleModal({
   };
 
   const handleRechazar = async () => {
-    if (!cotizacionId || isUpdating) return;
+    if (!cotizacionId || isUpdating || !isAuthorized) return;
 
     const confirmed = await showConfirm(
       '¿Rechazar cotización?',
@@ -364,7 +379,7 @@ export default function CotizacionDetalleModal({
             style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: showActionButtons ? 'space-between' : 'flex-end',
               paddingTop: '1.25rem',
               borderTop: '1px solid var(--border-soft)',
               flexWrap: 'wrap',
@@ -383,8 +398,8 @@ export default function CotizacionDetalleModal({
               </button>
             </div>
 
-            {/* Los botones Aprobar/Rechazar se muestran ÚNICAMENTE cuando el estado es 'Pendiente' */}
-            {cot.estado === 'Pendiente' && (
+            {/* Los botones Aprobar/Rechazar se muestran ÚNICAMENTE cuando el estado es 'Pendiente' y el usuario tiene permisos */}
+            {showActionButtons && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <button
                   type="button"

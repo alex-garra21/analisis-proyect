@@ -50,11 +50,12 @@ export default function Sidebar({ onModuleChange }: SidebarProps) {
     { id: 'clientes', label: 'Gestión de Clientes', Icon: Icons.Users, section: 'COMERCIAL' }
   );
 
-  // - Administrador y Sistemas: Gestión completa de Inventario y Categorías
+  // - Administrador y Sistemas: Gestión completa de Inventario, Categorías y Unidades de Medida
   if (isUserSistemas || isUserAdmin) {
     menuItems.push(
       { id: 'inventario', label: 'Gestión de Inventario', Icon: Icons.Clipboard, section: 'COMERCIAL' },
-      { id: 'categorias', label: 'Gestión de Categorías', Icon: Icons.Layers, section: 'COMERCIAL' }
+      { id: 'categorias', label: 'Gestión de Categorías', Icon: Icons.Layers, section: 'COMERCIAL' },
+      { id: 'unidades-medida', label: 'Gestión de Unidades de Medida', Icon: Icons.ClipboardList, section: 'COMERCIAL' }
     );
   }
 

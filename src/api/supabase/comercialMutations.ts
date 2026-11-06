@@ -455,3 +455,111 @@ export async function updateCotizacionEstadoMutation(
     throw new Error(`Error al actualizar estado: ${error.message}`);
   }
 }
+
+// ============================================================================
+// 5. GESTIÓN DE UNIDADES DE MEDIDA
+// ============================================================================
+
+export interface CreateUnidadMedidaInput {
+  nombre: string;
+  abreviatura?: string | null;
+  activo?: boolean;
+}
+
+export interface UpdateUnidadMedidaInput {
+  nombre: string;
+  abreviatura?: string | null;
+  activo?: boolean;
+}
+
+/**
+ * 5.1 Crear nueva unidad de medida
+ * Inserción directa en public.unidades_medida con objeto plano
+ */
+export async function createUnidadMedidaMutation(input: CreateUnidadMedidaInput): Promise<number> {
+  const cleanNombre = input.nombre.trim();
+  const cleanAbrev = input.abreviatura ? input.abreviatura.trim().toUpperCase() : null;
+
+  const { data, error } = await supabase
+    .from('unidades_medida')
+    .insert({
+      nombre: cleanNombre,
+      abreviatura: cleanAbrev,
+      activo: input.activo !== undefined ? input.activo : true,
+    })
+    .select('id')
+    .single();
+
+  if (error || !data) {
+    console.error('Error al registrar unidad de medida:', error);
+    throw new Error(`Error al registrar unidad de medida: ${error?.message || 'Error desconocido'}`);
+  }
+
+  return data.id;
+}
+
+/**
+ * 5.2 Actualizar unidad de medida existente
+ */
+export async function updateUnidadMedidaMutation(id: number, data: UpdateUnidadMedidaInput): Promise<void> {
+  const updatePayload: Record<string, any> = {
+    nombre: data.nombre.trim(),
+    abreviatura: data.abreviatura ? data.abreviatura.trim().toUpperCase() : null,
+  };
+  if (data.activo !== undefined) {
+    updatePayload.activo = Boolean(data.activo);
+  }
+
+  const { error } = await supabase
+    .from('unidades_medida')
+    .update(updatePayload)
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error al actualizar unidad de medida:', error);
+    throw new Error(`Error al actualizar unidad de medida: ${error.message}`);
+  }
+}
+
+/**
+ * 5.3 Cambiar estado activo/inactivo de unidad de medida
+ */
+export async function toggleUnidadMedidaStatusMutation(id: number, activo: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('unidades_medida')
+    .update({ activo })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error al cambiar estado de unidad de medida:', error);
+    throw new Error(`Error al cambiar estado: ${error.message}`);
+  }
+}
+
+/**
+ * 5.4 Eliminar unidad de medida de forma segura
+ */
+export async function deleteUnidadMedidaMutation(id: number): Promise<void> {
+  const { count, error: countError } = await supabase
+    .from('mercaderias')
+    .select('id', { count: 'exact', head: true })
+    .eq('unidad_medida_id', id);
+
+  if (countError) {
+    throw new Error(`Error al verificar productos asociados: ${countError.message}`);
+  }
+
+  if (count && count > 0) {
+    throw new Error(`No se puede eliminar la unidad porque está asignada a ${count} producto(s). Puedes desactivarla en su lugar.`);
+  }
+
+  const { error } = await supabase
+    .from('unidades_medida')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error al eliminar unidad de medida:', error);
+    throw new Error(`Error al eliminar unidad de medida: ${error.message}`);
+  }
+}

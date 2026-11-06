@@ -50,31 +50,25 @@ export async function getUnidadesMedidaQuery(): Promise<UnidadMedida[]> {
     const { data, error } = await supabase
       .from('unidades_medida')
       .select('*')
-      .order('nombre', { ascending: true });
+      .order('id', { ascending: true });
 
-    if (error || !data || data.length === 0) {
-      // Fallback a unidades estándar del comercio de flores si no estuviera poblada
-      return [
-        { id: 1, nombre: 'Unidad', abreviatura: 'UND' },
-        { id: 2, nombre: 'Docena', abreviatura: 'DOC' },
-        { id: 3, nombre: 'Paquete', abreviatura: 'PQT' },
-        { id: 4, nombre: 'Caja', abreviatura: 'CAJ' },
-        { id: 5, nombre: 'Ramo', abreviatura: 'RAM' },
-        { id: 6, nombre: 'Mazo', abreviatura: 'MAZ' },
-        { id: 7, nombre: 'Libra', abreviatura: 'LBS' },
-      ];
+    if (error) {
+      console.warn('Error al consultar unidades_medida en Supabase:', error.message);
+      return [];
     }
-    return data;
-  } catch {
-    return [
-      { id: 1, nombre: 'Unidad', abreviatura: 'UND' },
-      { id: 2, nombre: 'Docena', abreviatura: 'DOC' },
-      { id: 3, nombre: 'Paquete', abreviatura: 'PQT' },
-      { id: 4, nombre: 'Caja', abreviatura: 'CAJ' },
-      { id: 5, nombre: 'Ramo', abreviatura: 'RAM' },
-      { id: 6, nombre: 'Mazo', abreviatura: 'MAZ' },
-      { id: 7, nombre: 'Libra', abreviatura: 'LBS' },
-    ];
+
+    if (!data) return [];
+
+    return data.map((u) => ({
+      id: Number(u.id),
+      nombre: String(u.nombre || ''),
+      abreviatura: u.abreviatura ? String(u.abreviatura) : null,
+      activo: u.activo !== false,
+      created_at: u.created_at,
+    })) as UnidadMedida[];
+  } catch (err) {
+    console.error('Error inesperado al obtener unidades de medida:', err);
+    return [];
   }
 }
 
