@@ -303,30 +303,136 @@ export async function updateMercaderiaGeneralMutation(
 }
 
 // ============================================================================
-// 3. GESTIÓN DE INVENTARIO (AJUSTE DE STOCK)
+// 3. GESTIÓN DE INVENTARIO (AJUSTE DE STOCK Y PRECIO)
 // ============================================================================
 
+export interface UpdateMercaderiaStockInput {
+  id: number;
+  nuevoStock: number;
+  nuevoPrecio?: number | null;
+  // Metadatos para registro de auditoría
+  tipoMovimiento?: 'ingreso' | 'devolucion';
+  cantidadAfectada?: number;
+  motivo?: string;
+  stockAnterior?: number;
+  precioAnterior?: number;
+  nombreProducto?: string;
+  codigoMercaderia?: string;
+}
+
 /**
- * 3.1 Actualizar stock de mercadería (Ingreso o Devolución)
- * Actualización directa sobre el campo stock_actual de public.mercaderias
+ * 3.1 Actualizar stock y precio unitario de mercadería (Ingreso o Devolución)
+ * Actualización directa sobre public.mercaderias y registro en auditoria_sistema.
  */
 export async function updateMercaderiaStockMutation(
-  id: number,
-  nuevoStock: number
+  inputOrId: number | UpdateMercaderiaStockInput,
+  maybeStock?: number,
+  maybePrecio?: number
 ): Promise<Mercaderia> {
+  let id: number;
+  let nuevoStock: number;
+  let nuevoPrecio: number | undefined;
+  let meta: Partial<UpdateMercaderiaStockInput> = {};
+
+  if (typeof inputOrId === 'object' && inputOrId !== null) {
+    id = inputOrId.id;
+    nuevoStock = inputOrId.nuevoStock;
+    nuevoPrecio = inputOrId.nuevoPrecio !== undefined && inputOrId.nuevoPrecio !== null
+      ? Number(Number(inputOrId.nuevoPrecio).toFixed(2))
+      : undefined;
+    meta = inputOrId;
+  } else {
+    id = inputOrId;
+    nuevoStock = maybeStock ?? 0;
+    nuevoPrecio = maybePrecio !== undefined && maybePrecio !== null
+      ? Number(Number(maybePrecio).toFixed(2))
+      : undefined;
+  }
+
   const stockFinal = Math.max(0, Math.floor(Number(nuevoStock) || 0));
 
-  const { error } = await supabase
+  const updateData: Record<string, any> = {
+    stock_actual: stockFinal,
+  };
+
+  if (nuevoPrecio !== undefined && !isNaN(nuevoPrecio) && nuevoPrecio >= 0) {
+    updateData.precio_unitario = nuevoPrecio;
+  }
+
+  const { data, error } = await supabase
     .from('mercaderias')
-    .update({ stock_actual: stockFinal })
-    .eq('id', id);
+    .update(updateData)
+    .eq('id', id)
+    .select('id, codigo_mercaderia, nombre, stock_actual, precio_unitario')
+    .single();
 
   if (error) {
-    console.error('Error al actualizar stock:', error);
+    console.error('Error al actualizar inventario:', error);
     throw new Error(`Error al actualizar inventario: ${error.message}`);
   }
 
-  return { id, stock_actual: stockFinal } as unknown as Mercaderia;
+  // Registrar automáticamente en auditoria_sistema
+  try {
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id || null;
+
+    const productoNombre = meta.nombreProducto || data?.nombre || `Mercadería #${id}`;
+    const codigo = meta.codigoMercaderia || data?.codigo_mercaderia || '';
+    const tipo = meta.tipoMovimiento || (meta.cantidadAfectada !== undefined && meta.cantidadAfectada < 0 ? 'devolucion' : 'ingreso');
+    const cant = meta.cantidadAfectada !== undefined
+      ? Math.abs(meta.cantidadAfectada)
+      : meta.stockAnterior !== undefined
+      ? Math.abs(stockFinal - meta.stockAnterior)
+      : 0;
+
+    const precioModificado =
+      meta.precioAnterior !== undefined &&
+      nuevoPrecio !== undefined &&
+      Math.abs(meta.precioAnterior - nuevoPrecio) > 0.001;
+
+    let accion = tipo === 'ingreso' ? 'INGRESO' : 'DEVOLUCION';
+    if (precioModificado) {
+      accion = tipo === 'ingreso' ? 'INGRESO_Y_PRECIO' : 'DEVOLUCION_Y_PRECIO';
+    }
+
+    let descripcion = tipo === 'ingreso'
+      ? `Ingreso de mercadería: +${cant} unidades de "${productoNombre}".`
+      : `Devolución de inventario: -${cant} unidades de "${productoNombre}".`;
+
+    if (precioModificado) {
+      descripcion += ` Precio unitario actualizado de Q. ${meta.precioAnterior?.toFixed(2)} a Q. ${nuevoPrecio?.toFixed(2)}.`;
+    }
+
+    const payloadDetalles: Record<string, any> = {
+      mercaderia_id: id,
+      nombre_producto: productoNombre,
+      codigo: codigo,
+      tipo_movimiento: tipo,
+      cantidad: cant,
+      stock_anterior: meta.stockAnterior,
+      stock_nuevo: stockFinal,
+      precio_anterior: meta.precioAnterior,
+      precio_nuevo: nuevoPrecio !== undefined ? nuevoPrecio : meta.precioAnterior,
+      precio_unitario: nuevoPrecio !== undefined ? nuevoPrecio : meta.precioAnterior,
+      precio_modificado: precioModificado,
+    };
+
+    if (meta.motivo && meta.motivo.trim()) {
+      payloadDetalles.motivo = meta.motivo.trim();
+    }
+
+    await supabase.from('auditoria_sistema').insert({
+      usuario_id: uid,
+      modulo: 'inventario',
+      accion,
+      descripcion,
+      detalles: payloadDetalles,
+    });
+  } catch (auditErr) {
+    console.warn('Aviso al registrar auditoría de inventario:', auditErr);
+  }
+
+  return { id, stock_actual: stockFinal, ...(nuevoPrecio !== undefined ? { precio_unitario: nuevoPrecio } : {}) } as unknown as Mercaderia;
 }
 
 // ============================================================================

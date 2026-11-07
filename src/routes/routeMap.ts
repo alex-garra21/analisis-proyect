@@ -22,6 +22,7 @@ const STATIC_SEGMENTS = [
   'usuarios',
   'auditoria',
   'unidades-medida',
+  'reportes-inteligentes',
 ] as const;
 
 const STATIC_SET = new Set<string>(STATIC_SEGMENTS);

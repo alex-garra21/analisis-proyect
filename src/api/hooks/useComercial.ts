@@ -24,6 +24,7 @@ import {
   updateUnidadMedidaMutation,
   toggleUnidadMedidaStatusMutation,
   deleteUnidadMedidaMutation,
+  type UpdateMercaderiaStockInput,
 } from '../supabase/comercialMutations';
 import type {
   CreateMercaderiaInput,
@@ -120,10 +121,15 @@ export function useUpdateMercaderiaGeneral() {
 export function useUpdateMercaderiaStock() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, nuevoStock }: { id: number; nuevoStock: number }) =>
-      updateMercaderiaStockMutation(id, nuevoStock),
-    onSuccess: () => {
+    mutationFn: (input: UpdateMercaderiaStockInput | { id: number; nuevoStock: number; nuevoPrecio?: number }) =>
+      updateMercaderiaStockMutation(input),
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['mercaderias'] });
+      if (data?.id) {
+        queryClient.invalidateQueries({ queryKey: ['mercaderia', data.id] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['auditoria_sistema'] });
+      queryClient.invalidateQueries({ queryKey: ['vw_reportes_inteligentes_gerencia'] });
     },
   });
 }

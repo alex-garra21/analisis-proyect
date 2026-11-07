@@ -15,12 +15,16 @@
     "@tanstack/react-query-devtools": "^5.100.6",
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "groq-sdk": "^1.6.0",
     "html-to-image": "^1.11.13",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.9",
     "qr-code-styling": "^1.9.2",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0",
+    "recharts": "^3.10.1",
     "sweetalert2": "^11.26.24"
   },
   "devDependencies": {

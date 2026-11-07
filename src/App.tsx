@@ -24,6 +24,7 @@ const ClientesModule = lazy(() => import('./modules/admin/clientes/ClientesModul
 const UsersModule = lazy(() => import('./modules/admin/usuarios/UsersModule'));
 const AuditoriaPage = lazy(() => import('./pages/private/AuditoriaPage'));
 const UnidadesMedidaModule = lazy(() => import('./modules/admin/unidades_medida/UnidadesMedidaModule'));
+const ReportesInteligentesPage = lazy(() => import('./pages/private/ReportesInteligentesPage'));
 
 import { DashboardTitleProvider } from './utils/DashboardTitleContext';
 import { ROUTES, seg, plainPath } from './routes/routeMap';
@@ -143,6 +144,7 @@ function App() {
             <Route path={seg('usuarios')} element={<UsersModule />} />
             <Route path={seg('auditoria')} element={<AuditoriaPage />} />
             <Route path={seg('unidades-medida')} element={<UnidadesMedidaModule />} />
+            <Route path={seg('reportes-inteligentes')} element={<ReportesInteligentesPage />} />
             <Route path="*" element={<NotFoundOrRedirect />} />
           </Route>
 

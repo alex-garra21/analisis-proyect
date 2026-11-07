@@ -24,21 +24,27 @@ export default function InventarioMovimientoModal({
 
   const [tipo, setTipo] = useState<TipoMovimiento>('ingreso');
   const [cantidad, setCantidad] = useState<string>('1');
+  const [precioUnitario, setPrecioUnitario] = useState<string>('');
   const [motivo, setMotivo] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && mercaderia) {
       setTipo('ingreso');
       setCantidad('1');
       setMotivo('');
+      // Prellenar con el precio unitario actual formateado a 2 decimales
+      const currentPriceNum = Number(mercaderia.precio_unitario || 0);
+      setPrecioUnitario(currentPriceNum.toFixed(2));
     }
-  }, [isOpen]);
+  }, [isOpen, mercaderia]);
 
   if (!mercaderia) return null;
 
   const parsedCantidad = parseInt(cantidad, 10) || 0;
   const currentStock = mercaderia.stock_actual || 0;
+  const currentPrice = Number(mercaderia.precio_unitario || 0);
+  const parsedPrecio = parseFloat(precioUnitario);
 
   const resultingStock =
     tipo === 'ingreso'
@@ -58,15 +64,34 @@ export default function InventarioMovimientoModal({
       return;
     }
 
+    if (isNaN(parsedPrecio) || parsedPrecio < 0) {
+      showToast('Ingresa un precio unitario válido (0 o mayor).', 'warning');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const precioHaCambiado = Math.abs(currentPrice - parsedPrecio) > 0.001;
+
       await updateStockMutation.mutateAsync({
         id: mercaderia.id,
         nuevoStock: resultingStock,
+        nuevoPrecio: parsedPrecio,
+        tipoMovimiento: tipo,
+        cantidadAfectada: tipo === 'ingreso' ? parsedCantidad : -parsedCantidad,
+        motivo: motivo.trim() || undefined,
+        stockAnterior: currentStock,
+        precioAnterior: currentPrice,
+        nombreProducto: mercaderia.nombre,
+        codigoMercaderia: mercaderia.codigo_mercaderia,
       });
 
+      const mensajePrecio = precioHaCambiado
+        ? ` y precio actualizado a Q. ${parsedPrecio.toFixed(2)}`
+        : '';
+
       showToast(
-        `Inventario actualizado: ${mercaderia.nombre} ahora tiene ${resultingStock} unidades.`,
+        `Inventario actualizado: ${mercaderia.nombre} ahora tiene ${resultingStock} unidades${mensajePrecio}.`,
         'success'
       );
       onClose();
@@ -131,6 +156,53 @@ export default function InventarioMovimientoModal({
             {currentStock}
           </div>
         </div>
+      </div>
+
+      {/* Campo de Entrada de Precio Unitario (Q.) */}
+      <div style={{ marginBottom: '1.25rem' }}>
+        <FormField
+          label="Precio Unitario (Q.)"
+          description={
+            parsedPrecio !== currentPrice && !isNaN(parsedPrecio)
+              ? `El precio se actualizará de ${formatQuetzales(currentPrice)} a ${formatQuetzales(parsedPrecio)}.`
+              : 'Precio vigente en catálogo. Puedes modificarlo libremente si la mercadería cambió de valor.'
+          }
+        >
+          <div style={{ position: 'relative' }}>
+            <span
+              style={{
+                position: 'absolute',
+                left: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-secondary)',
+                fontWeight: 700,
+                fontSize: '14px',
+                pointerEvents: 'none',
+              }}
+            >
+              Q.
+            </span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              className="dashboard-input"
+              value={precioUnitario}
+              onChange={(e) => setPrecioUnitario(e.target.value)}
+              placeholder="0.00"
+              required
+              style={{
+                paddingLeft: '34px',
+                fontWeight: 600,
+                borderColor:
+                  parsedPrecio !== currentPrice && !isNaN(parsedPrecio)
+                    ? '#C85A32'
+                    : undefined,
+              }}
+            />
+          </div>
+        </FormField>
       </div>
 
       {/* Selector de Tipo de Movimiento: Ingreso vs Devolución */}

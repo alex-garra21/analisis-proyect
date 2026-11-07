@@ -113,6 +113,64 @@ export interface AuditoriaRegistro {
   } | null;
 }
 
+export interface ReporteInteligenteGerenciaVista {
+  id?: string | number;
+  created_at: string;
+  modulo: string;
+  usuario_responsable: string;
+  detalle_comercial_amigable: string;
+  accion?: string;
+  descripcion?: string;
+  [key: string]: any;
+}
+
+export interface InventarioEstadoActualVista {
+  id: number;
+  codigo_mercaderia: string;
+  nombre: string;
+  stock_actual: number;
+  precio_unitario: number;
+  categoria?: string | null;
+  categoria_nombre?: string | null;
+  unidad_medida?: string | null;
+  unidad_nombre?: string | null;
+  activo?: boolean;
+  [key: string]: any;
+}
+
+export interface ResumenComercialGlobalVista {
+  id?: number | string;
+  codigo_cotizacion?: string;
+  cliente?: string;
+  nombre_institucion?: string;
+  contacto?: string;
+  total_quetzales?: number;
+  estado?: string;
+  fecha_emision?: string;
+  [key: string]: any;
+}
+
+export interface CategoriaActualVista {
+  id?: number;
+  nombre: string;
+  descripcion?: string | null;
+  [key: string]: any;
+}
+
+export interface UnidadMedidaActualVista {
+  id?: number;
+  nombre: string;
+  abreviatura?: string | null;
+  [key: string]: any;
+}
+
+export interface DatosMaestrosDistribuidora {
+  inventario: InventarioEstadoActualVista[];
+  resumenComercial: ResumenComercialGlobalVista[];
+  categorias: CategoriaActualVista[];
+  unidadesMedida: UnidadMedidaActualVista[];
+}
+
 export const formatQuetzales = (value: number | string | null | undefined): string => {
   const num = typeof value === 'string' ? parseFloat(value) : (value ?? 0);
   return `Q. ${(isNaN(num) ? 0 : num).toLocaleString('es-GT', {
